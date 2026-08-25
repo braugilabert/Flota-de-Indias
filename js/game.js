@@ -149,6 +149,15 @@
       profile: "equilibrada",
       cargoBudget: 36000,
       participations: 12000,
+      loan: 0,
+      debtDue: 0,
+      universityPassed: true,
+      strategicMission: "comercio",
+      incorporation: "ordinaria",
+      secrecy: 70,
+      diplomacy: 0,
+      strategicMerit: 0,
+      memberStatus: "aspirante",
       insurance: true,
       dispatch: null,
       cargoValue: 0,
@@ -296,6 +305,40 @@
     button.parentNode.insertBefore(wrapper, button);
   }
 
+  function ensureAdvancedControls() {
+    if (byId("historical-systems") || !byId("dispatch-button")) return;
+    const section = document.createElement("section");
+    section.id = "historical-systems";
+    section.className = "game-card game-card--wide historical-systems";
+    section.innerHTML = `
+      <div class="game-card__heading"><span class="step-marker">5</span><div>
+        <p class="kicker">Gobierno, financiación y servicio</p><h3>Consejo estratégico</h3>
+      </div></div>
+      <div class="advanced-grid">
+        <label>Incorporación del navío<select id="incorporation-select">
+          <option value="ordinaria">Inscripción ordinaria</option><option value="asiento">Navío de asiento · doble avería</option>
+          <option value="beneficencia">Beneficencia · exige aprobación</option><option value="conserva">En conserva · sin privilegios</option>
+        </select></label>
+        <label>Servicio principal<select id="mission-select">
+          <option value="comercio">Comercio y tornaviaje</option><option value="socorro">Socorro y pertrechos de plaza</option>
+          <option value="defensa">Defensa de puerto y convoy</option><option value="presa">Presa autorizada</option>
+        </select></label>
+        <label>Préstamo particular limitado<select id="loan-select">
+          <option value="0">Sin préstamo</option><option value="10000">10.000 pesos</option><option value="20000">20.000 pesos</option><option value="30000">30.000 pesos</option>
+        </select></label>
+        <label>Custodia del secreto<select id="secrecy-select">
+          <option value="90">Secreto estricto</option><option value="70">Reserva ordinaria</option><option value="45">Noticias a aliados</option>
+        </select></label>
+      </div>
+      <div class="council-actions">
+        <button class="button button--secondary" id="university-exam-button" type="button">Examen de Mareantes</button>
+        <button class="button button--secondary" id="admission-button" type="button">Solicitar ingreso</button>
+        <span id="advanced-status">Examen y acuerdos pendientes.</span>
+      </div>`;
+    const order = byId("dispatch-button").closest("section");
+    order.parentNode.insertBefore(section, order);
+  }
+
   function populateSelectors() {
     const routeSelect = byId("route-select");
     if (routeSelect) {
@@ -326,7 +369,11 @@
     const participationSelect = byId("participation-select");
     if (participationSelect) participationSelect.value = "25";
     const university = byId("university-certification");
-    if (university) university.checked = true;
+    if (university) university.checked = state.universityPassed;
+    if (byId("incorporation-select")) byId("incorporation-select").value = state.incorporation;
+    if (byId("mission-select")) byId("mission-select").value = state.strategicMission;
+    if (byId("loan-select")) byId("loan-select").value = String(state.loan || 0);
+    if (byId("secrecy-select")) byId("secrecy-select").value = String(state.secrecy || 70);
   }
 
   function planFromControls() {
@@ -350,6 +397,7 @@
         ? Number(byId("participation-input").value)
         : cargoBudget * participationPercent / 100,
       insurance: Boolean(byId("insurance-check") && byId("insurance-check").checked),
+      incorporation: byId("incorporation-select") ? byId("incorporation-select").value : state.incorporation,
     });
   }
 
@@ -362,6 +410,10 @@
     state.cargoBudget = plan.cargoBudget;
     state.participations = plan.participations;
     state.insurance = plan.insurance;
+    state.incorporation = plan.incorporation || "ordinaria";
+    state.strategicMission = byId("mission-select") ? byId("mission-select").value : state.strategicMission;
+    state.loan = Number(byId("loan-select") ? byId("loan-select").value : state.loan) || 0;
+    state.secrecy = Number(byId("secrecy-select") ? byId("secrecy-select").value : state.secrecy) || 70;
     const output = byId("cargo-budget-output");
     if (output) output.textContent = formatMoney.format(state.cargoBudget);
     renderDispatch();
@@ -377,6 +429,14 @@
       certification.problems.push("Falta la certificación obligatoria de la Universidad de Mareantes.");
     }
     const calculation = ENGINE.calculateDispatch(plan, GAME_RULES);
+    if (plan.incorporation === "asiento") calculation.averia *= 2;
+    if (plan.incorporation === "conserva") {
+      calculation.averia = 0;
+      calculation.insurance = 0;
+    }
+    calculation.grossCost = ENGINE.money(plan.cargoBudget + calculation.averia + calculation.tribute + calculation.escort + calculation.supplies + calculation.insurance);
+    calculation.treasuryCost = ENGINE.money(calculation.grossCost - calculation.acceptedParticipations);
+    const finance = ENGINE.calculateFinance({ loan: state.loan }, state.treasury, GAME_RULES);
     const budgetOutput = byId("cargo-budget-output");
     if (budgetOutput) budgetOutput.textContent = formatMoney.format(plan.cargoBudget);
     const profile = PROFILES[state.profile] || PROFILES.equilibrada;
@@ -395,10 +455,12 @@
           <div><dt>Carga</dt><dd>${formatMoney.format(plan.cargoBudget)}</dd></div>
           <div><dt>Avería</dt><dd>${formatMoney.format(calculation.averia)}</dd></div>
           <div><dt>Tributo Real</dt><dd>${formatMoney.format(calculation.tribute)}</dd></div>
+          <div class="tax-detail"><dt>↳ Corona / almojarifazgo / alcabala / palmeo</dt><dd>${formatMoney.format(calculation.taxes.tributoCorona)} / ${formatMoney.format(calculation.taxes.almojarifazgo)} / ${formatMoney.format(calculation.taxes.alcabala)} / ${formatMoney.format(calculation.taxes.palmeoTonelada)}</dd></div>
           <div><dt>Escolta y avisos</dt><dd>${formatMoney.format(calculation.escort)}</dd></div>
           <div><dt>Pertrechos</dt><dd>${formatMoney.format(calculation.supplies)}</dd></div>
           <div><dt>Seguro</dt><dd>${formatMoney.format(calculation.insurance)}</dd></div>
           <div><dt>Participaciones</dt><dd>−${formatMoney.format(calculation.acceptedParticipations)}</dd></div>
+          <div><dt>Préstamo particular</dt><dd>−${formatMoney.format(finance.loan)} · deuda ${formatMoney.format(finance.debtDue)}</dd></div>
           <div class="total cost-ledger__total"><dt>Cargo a tesorería</dt><dd>${formatMoney.format(calculation.treasuryCost)}</dd></div>`;
     }
     const institutions = byId("institution-status");
@@ -432,11 +494,14 @@
     }
     const button = byId("dispatch-button");
     if (button) {
-      button.disabled = !certification.approved || calculation.treasuryCost > state.treasury;
-      if (calculation.treasuryCost > state.treasury) {
+      const specialApproved = plan.incorporation !== "beneficencia" || state.memberStatus === "miembro";
+      button.disabled = !certification.approved || !specialApproved || calculation.treasuryCost > finance.available;
+      if (calculation.treasuryCost > finance.available) {
         setStatus("La tesorería no puede financiar este despacho.", "warning");
       }
     }
+    const advanced = byId("advanced-status");
+    if (advanced) advanced.textContent = `Universidad: ${state.universityPassed ? "examen aprobado" : "pendiente"} · condición: ${state.memberStatus} · secreto ${state.secrecy}/100 · misión: ${state.strategicMission}.`;
   }
 
   function updateHeader() {
@@ -520,11 +585,40 @@
     const random = ENGINE.createRng(state.seed + state.eventCounter * 7919);
     const event = ENGINE.chooseWeighted(candidates, random) || FALLBACK_EVENTS[0];
     state.eventCounter += 1;
-    const choices = (event.choices && event.choices.length ? event.choices : [{ label: "Continuar", effects: event.effects || {} }])
+    let choices = (event.choices && event.choices.length ? event.choices : [{ label: "Continuar", effects: event.effects || {} }])
       .map((choice) => normalizeEventChoice(event, choice));
+    if (["combate", "amenaza"].includes(event.category)) {
+      const profile = PROFILES[state.profile] || PROFILES.equilibrada;
+      choices = [
+        { label: "Formar línea y batir al enemigo", combat: "line", effects: {}, outcome: "La escolta sostiene la línea de combate." },
+        { label: "Cerrar sobre los mercantes", combat: "protect", effects: {}, outcome: "La Capitana protege el cuerpo del convoy." },
+        { label: "Evadir con toda vela", combat: "evade", effects: {}, outcome: "La flota intenta romper el contacto." },
+      ].map((choice) => Object.assign(choice, { escortStrength: 25 + profile.escortCount * 22 + profile.avisoCount * 4 }));
+    }
     const dialog = byId("event-dialog");
 
     const applyChoice = (choice) => {
+      if (choice.combat) {
+        const battle = ENGINE.resolveCombat({
+          escortStrength: choice.escortStrength,
+          enemyStrength: 42 + state.threat / 3,
+          cargoValue: state.returnCargoValue || state.cargoValue,
+          hull: state.hull,
+          cohesion: state.cohesion,
+        }, choice.combat, random());
+        state.hull = battle.hull;
+        state.cohesion = battle.cohesion;
+        const cargoKey = state.returnCargoValue > 0 ? "returnCargoValue" : "cargoValue";
+        state[cargoKey] = Math.max(0, ENGINE.money(state[cargoKey] - battle.cargoLoss));
+        state.cargoLost = ENGINE.money(state.cargoLost + battle.cargoLoss);
+        state.reputation = ENGINE.clamp(state.reputation + (battle.won ? 5 : battle.escaped ? 0 : -4), 0, 100);
+        if (battle.won && state.strategicMission === "presa") {
+          state.treasury = ENGINE.money(state.treasury + 6000);
+          state.strategicMerit += 12;
+          state.flags.push("presa_autorizada");
+        }
+        choice.outcome = `${choice.outcome} Fuerza propia ${Math.round(battle.escortStrength)}, enemiga ${Math.round(battle.enemyStrength)}; pérdida de carga ${formatMoney.format(battle.cargoLoss)}.`;
+      }
       const riskCategory = ["combate", "amenaza"].includes(event.category)
         ? "enemy"
         : event.category === "meteorologia" ? "storm" : "general";
@@ -561,6 +655,34 @@
     });
   }
 
+  function openUniversityExam() {
+    const dialog = byId("event-dialog");
+    if (!dialog) return;
+    showDialog(dialog, `<article class="event-card"><p class="eyebrow">Universidad de Mareantes</p>
+      <h2>Examen de despacho y navegación</h2><p>Responded conforme a la Real Cédula.</p>
+      <label>Mínimo ordinario de ida<select data-exam="escort"><option value="">Elegir</option><option value="2">Dos escoltas o dos avisos</option><option value="1">Una escolta</option></select></label>
+      <label>Posición de la Almiranta<select data-exam="almiranta"><option value="">Elegir</option><option value="rear">Retaguardia y auxilio</option><option value="front">Siempre en vanguardia</option></select></label>
+      <label>Navío en conserva<select data-exam="conserva"><option value="">Elegir</option><option value="none">No adquiere privilegios automáticos</option><option value="all">Obtiene plena cobertura</option></select></label>
+      <button class="button button--primary" type="button" id="grade-exam-button">Presentar respuestas</button></article>`);
+    byId("grade-exam-button").addEventListener("click", () => {
+      const answers = Array.from(dialog.querySelectorAll("[data-exam]")).map((control) => control.value);
+      state.universityPassed = answers.join("|") === "2|rear|none";
+      const certificate = byId("university-certification");
+      if (certificate) certificate.checked = state.universityPassed;
+      addLog(state.universityPassed ? "Examen de Mareantes aprobado y revista certificada." : "Examen de Mareantes no aprobado.", "Universidad");
+      closeDialog(dialog); renderDispatch(); saveState();
+      setStatus(state.universityPassed ? "La Universidad expide certificación." : "Debe repetir el examen de Mareantes.", state.universityPassed ? "success" : "warning");
+    });
+  }
+
+  function requestAdmission() {
+    const admitted = state.reputation >= 50 && state.secrecy >= 70;
+    state.memberStatus = admitted ? "miembro" : "aspirante";
+    if (admitted) state.reputation = ENGINE.clamp(state.reputation + 2, 0, 100);
+    addLog(admitted ? "Ingreso aprobado por buena fama, propuesta y compromiso de secreto." : "Ingreso aplazado: falta reputación o compromiso de secreto.", "Compañía");
+    renderDispatch(); updateHeader(); saveState();
+  }
+
   function sail(kind) {
     const outbound = kind === "ida";
     const route = currentRoute();
@@ -592,18 +714,31 @@
     const plan = planFromControls();
     const certification = ENGINE.certifyPlan(plan, "outbound");
     const calculation = ENGINE.calculateDispatch(plan, GAME_RULES);
+    if (plan.incorporation === "asiento") calculation.averia *= 2;
+    if (plan.incorporation === "conserva") {
+      calculation.averia = 0;
+      calculation.insurance = 0;
+    }
+    calculation.grossCost = ENGINE.money(plan.cargoBudget + calculation.averia + calculation.tribute + calculation.escort + calculation.supplies + calculation.insurance);
+    calculation.treasuryCost = ENGINE.money(calculation.grossCost - calculation.acceptedParticipations);
+    const finance = ENGINE.calculateFinance({ loan: state.loan }, state.treasury, GAME_RULES);
     const universityAccepted = !byId("university-certification") || byId("university-certification").checked;
     if (plan.mode === "flota" && !universityAccepted) certification.approved = false;
     if (!certification.approved) {
       setStatus("La Universidad de Mareantes ha denegado el despacho.", "warning");
       return;
     }
-    if (calculation.treasuryCost > state.treasury) {
+    if (plan.incorporation === "beneficencia" && state.memberStatus !== "miembro") {
+      setStatus("La incorporación por beneficencia necesita aprobación de la Compañía.", "warning");
+      return;
+    }
+    if (calculation.treasuryCost > finance.available) {
       setStatus("No hay fondos suficientes para despachar la expedición.", "warning");
       return;
     }
     state.dispatch = calculation;
-    state.treasury = ENGINE.money(state.treasury - calculation.treasuryCost);
+    state.treasury = ENGINE.money(finance.available - calculation.treasuryCost);
+    state.debtDue = finance.debtDue;
     state.cargoValue = plan.cargoBudget;
     state.returnCargoValue = 0;
     state.goalValue = 0;
@@ -619,6 +754,12 @@
     state.negligence = false;
     state.disputes = 0;
     state.flags = [];
+    if (state.incorporation !== "ordinaria") state.flags.push(`incorporacion_${state.incorporation}`);
+    if (state.strategicMission !== "comercio") state.flags.push(`mision_${state.strategicMission}`);
+    if (state.secrecy < 60) {
+      state.threat += 8;
+      state.diplomacy += 8;
+    }
     state.outboundSold = false;
     state.marketDay = 1;
     state.settlement = null;
@@ -631,6 +772,8 @@
       `Avería ${formatMoney.format(calculation.averia)}; Tributo Real ${formatMoney.format(calculation.tribute)}; seguro ${formatMoney.format(calculation.insurance)}.`,
       "cuentas"
     );
+    if (state.debtDue) addLog(`Préstamo particular recibido; vencimiento ${formatMoney.format(state.debtDue)}.`, "financiación");
+    addLog(`Incorporación ${state.incorporation}; misión ${state.strategicMission}; secreto ${state.secrecy}/100.`, "acuerdo");
     updateHeader();
     showPhase("ida");
     setStatus("La Universidad certifica el despacho. Comienza la travesía de ida.", "success");
@@ -770,6 +913,12 @@
     const saleRevenue = ENGINE.money(state.returnCargoValue * saleMultiplier);
     state.goalValue = saleRevenue;
     state.settlement = ENGINE.calculateSettlement(state, state.dispatch, saleRevenue);
+    const missionReward = state.strategicMission === "socorro" ? 4500
+      : state.strategicMission === "defensa" ? 3500 + state.strategicMerit * 100
+        : state.strategicMission === "presa" && state.flags.includes("presa_autorizada") ? 3000 : 0;
+    state.settlement.missionReward = missionReward;
+    state.settlement.debtPayment = Math.min(state.debtDue || 0, Math.max(0, state.treasury + state.settlement.net + missionReward));
+    state.settlement.net = ENGINE.money(state.settlement.net + missionReward - state.settlement.debtPayment);
     state.treasury = ENGINE.money(state.treasury + state.settlement.net);
     state.returnCargoValue = 0;
     addLog(`Carga de retorno liquidada por ${formatMoney.format(saleRevenue)}.`, "liquidación");
@@ -779,6 +928,8 @@
     if (state.settlement.investorPayment) {
       addLog(`Partícipes satisfechos con ${formatMoney.format(state.settlement.investorPayment)}.`, "participaciones");
     }
+    if (missionReward) addLog(`Servicio de ${state.strategicMission} reconocido con ${formatMoney.format(missionReward)}.`, "servicio real");
+    if (state.settlement.debtPayment) addLog(`Préstamo particular amortizado por ${formatMoney.format(state.settlement.debtPayment)}.`, "financiación");
     showPhase("liquidacion");
     updateHeader();
     renderSettlement();
@@ -806,6 +957,8 @@
         ["Venta en España", settlement.saleRevenue],
         ["Indemnización del seguro", settlement.insuranceClaim],
         ["Pago a partícipes", -settlement.investorPayment],
+        ["Merced por servicio", settlement.missionReward || 0],
+        ["Amortización de préstamo", -(settlement.debtPayment || 0)],
         ["Resultado neto", settlement.net],
         ["Tesorería final", state.treasury],
       ].map(([label, value]) => `<tr><th>${label}</th><td>${value < 0 ? formatMoney.format(Math.abs(value)) : "—"}</td><td>${value >= 0 ? formatMoney.format(value) : "—"}</td></tr>`).join("");
@@ -947,7 +1100,7 @@
   }
 
   function bindEvents() {
-    ["route-select", "ship-select", "cargo-budget", "insurance-check", "escort-check", "mail-check", "departure-select", "voyage-mode-select", "participation-input", "participation-select", "university-certification"]
+    ["route-select", "ship-select", "cargo-budget", "insurance-check", "escort-check", "mail-check", "departure-select", "voyage-mode-select", "participation-input", "participation-select", "university-certification", "incorporation-select", "mission-select", "loan-select", "secrecy-select"]
       .forEach((id) => {
         const element = byId(id);
         if (element) element.addEventListener("change", syncPlanState);
@@ -966,6 +1119,10 @@
     });
     const dispatch = byId("dispatch-button");
     if (dispatch) dispatch.addEventListener("click", dispatchFleet);
+    const exam = byId("university-exam-button");
+    if (exam) exam.addEventListener("click", openUniversityExam);
+    const admission = byId("admission-button");
+    if (admission) admission.addEventListener("click", requestAdmission);
     const applyComposition = byId("add-ship-button");
     if (applyComposition) applyComposition.addEventListener("click", () => {
       syncPlanState();
@@ -1006,6 +1163,7 @@
 
   function init() {
     ensureDispatchControls();
+    ensureAdvancedControls();
     populateSelectors();
     bindEvents();
     renderRulesDialog();

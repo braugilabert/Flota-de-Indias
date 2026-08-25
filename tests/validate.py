@@ -38,6 +38,11 @@ def main() -> int:
 
     css = (ROOT / "css" / "styles.css").read_text(encoding="utf-8")
     css_balanced = css.count("{") == css.count("}")
+    implementation_report = ROOT / "docs" / "IMPLEMENTACION_REAL_CEDULA.md"
+    report_complete = implementation_report.exists() and all(
+        f"| {number}." in implementation_report.read_text(encoding="utf-8")
+        for number in range(16)
+    )
 
     replacement_errors = []
     text_suffixes = {".html", ".css", ".js", ".json", ".md", ".svg", ".py"}
@@ -54,6 +59,7 @@ def main() -> int:
         "recursos ausentes": missing_assets,
         "archivos con codificación sospechosa": replacement_errors,
         "CSS desequilibrado": [] if css_balanced else ["css/styles.css"],
+        "matriz de la Real Cédula incompleta": [] if report_complete else [str(implementation_report)],
     }
     active_failures = {name: values for name, values in failures.items() if values}
     if active_failures:

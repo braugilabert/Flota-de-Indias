@@ -83,5 +83,19 @@ test("la negligencia impide cobrar el seguro", () => {
   assert.equal(claim, 0);
 });
 
-console.log("Pruebas de humo completadas.");
+test("el préstamo particular queda limitado y genera vencimiento", () => {
+  const result = engine.calculateFinance({ loan: 50000 }, 10000);
+  assert.equal(result.loan, 30000);
+  assert.equal(result.available, 40000);
+  assert.equal(result.debtDue, 33600);
+});
 
+test("proteger mercantes reduce la pérdida frente a evadir", () => {
+  const base = { escortStrength: 60, enemyStrength: 50, cargoValue: 20000, hull: 100, cohesion: 70 };
+  const protect = engine.resolveCombat(base, "protect", 0.5);
+  const evade = engine.resolveCombat(base, "evade", 0.5);
+  assert.ok(protect.cargoLoss < evade.cargoLoss);
+  assert.ok(protect.cohesion > evade.cohesion);
+});
+
+console.log("Pruebas de humo completadas.");

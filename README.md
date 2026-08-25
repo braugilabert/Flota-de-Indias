@@ -17,6 +17,9 @@ La fuente de diseño se conserva en la raíz del proyecto:
 Los apartados 0–14 gobiernan el prototipo. El apartado 15 se documenta por
 separado como banco de hipótesis y cifras experimentales.
 
+La correspondencia verificable entre cada apartado y las mecánicas está en
+[`docs/IMPLEMENTACION_REAL_CEDULA.md`](docs/IMPLEMENTACION_REAL_CEDULA.md).
+
 ## Ejecutar
 
 No necesita instalar dependencias. Desde la carpeta del proyecto:

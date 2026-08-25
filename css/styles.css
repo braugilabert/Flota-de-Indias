@@ -36,6 +36,18 @@
   --content-max: 1720px;
 }
 
+.historical-systems { border-color: rgba(175, 130, 64, .48); }
+.advanced-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
+.advanced-grid label { display: grid; gap: .35rem; color: var(--ink-muted, #625747); font-size: .88rem; font-weight: 700; }
+.council-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin-top: 1rem; }
+.council-actions span { color: var(--ink-muted, #625747); font-size: .86rem; }
+.tax-detail { font-size: .76rem; color: var(--ink-muted, #625747); }
+.tax-detail dd { max-width: 18rem; text-align: right; }
+
+@media (max-width: 720px) {
+  .advanced-grid { grid-template-columns: 1fr; }
+}
+
 *,
 *::before,
 *::after {

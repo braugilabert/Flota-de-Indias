@@ -15,6 +15,10 @@
     suppliesPerShip: 600,
     participationReturnRate: 0.10,
     maxParticipationRate: 0.50,
+    almojarifazgoRate: 0.025,
+    alcabalaRate: 0.02,
+    portDuesRate: 0.01,
+    loanInterestRate: 0.12,
   });
 
   const FORMATIONS = Object.freeze({
@@ -91,6 +95,14 @@
     const acceptedParticipations = money(Math.min(plan.participations, maximumParticipation));
     const averia = mode.averia ? money(plan.merchantCount * rules.averiaPerMerchant) : 0;
     const tribute = money(plan.cargoBudget * rules.tributeRate);
+    /* Desglose jugable de cargas fiscales. No se suma otra vez al total: el
+       Tributo Real compuesto ya representa la carga fiscal agregada. */
+    const taxes = {
+      almojarifazgo: money(plan.cargoBudget * rules.almojarifazgoRate),
+      alcabala: money(plan.cargoBudget * rules.alcabalaRate),
+      palmeoTonelada: money(plan.cargoBudget * rules.portDuesRate),
+    };
+    taxes.tributoCorona = money(Math.max(0, tribute - taxes.almojarifazgo - taxes.alcabala - taxes.palmeoTonelada));
     const escort = money(
       plan.escortCount * rules.escortCharter + plan.avisoCount * rules.avisoCharter
     );
@@ -110,6 +122,7 @@
       plan,
       averia,
       tribute,
+      taxes,
       escort,
       supplies,
       insurance,
@@ -120,6 +133,46 @@
       participationLiability: money(
         acceptedParticipations * (1 + rules.participationReturnRate)
       ),
+    };
+  }
+
+  function calculateFinance(rawRequest, treasury, customRules) {
+    const rules = Object.assign({}, DEFAULT_RULES, customRules || {});
+    const request = rawRequest || {};
+    const loan = money(clamp(request.loan, 0, 30000));
+    const donation = money(clamp(request.donation, 0, 12000));
+    const prize = money(clamp(request.prize, 0, 20000));
+    return {
+      loan,
+      donation,
+      prize,
+      available: money((treasury || 0) + loan + donation + prize),
+      debtDue: money(loan * (1 + rules.loanInterestRate)),
+    };
+  }
+
+  function resolveCombat(rawState, action, randomValue) {
+    const battle = Object.assign({ escortStrength: 40, enemyStrength: 45, cargoValue: 0, hull: 100, cohesion: 70 }, rawState || {});
+    const tactics = {
+      line: { attack: 18, defence: 0.88, cargoLoss: 0.02, cohesion: -3 },
+      protect: { attack: 10, defence: 0.68, cargoLoss: 0.005, cohesion: 2 },
+      evade: { attack: 5, defence: 1.08, cargoLoss: 0.05, cohesion: -8 },
+    };
+    const tactic = tactics[action] || tactics.line;
+    const roll = clamp(randomValue == null ? 0.5 : randomValue, 0, 1);
+    const enemyDamage = money(tactic.attack * (0.75 + roll * 0.5));
+    const ownDamage = money(Math.max(2, battle.enemyStrength / 7 * tactic.defence * (1.25 - roll * 0.5)));
+    const enemyStrength = Math.max(0, money(battle.enemyStrength - enemyDamage));
+    const escortStrength = Math.max(0, money(battle.escortStrength - ownDamage));
+    const cargoLoss = money(battle.cargoValue * tactic.cargoLoss * (1.25 - roll * 0.5));
+    return {
+      escortStrength,
+      enemyStrength,
+      hull: clamp(battle.hull - ownDamage * 0.55, 0, 100),
+      cohesion: clamp(battle.cohesion + tactic.cohesion, 0, 100),
+      cargoLoss,
+      won: enemyStrength <= 0 || (enemyStrength < escortStrength * 0.35),
+      escaped: action === "evade" && roll >= 0.45,
     };
   }
 
@@ -239,6 +292,8 @@
     normalizePlan,
     certifyPlan,
     calculateDispatch,
+    calculateFinance,
+    resolveCombat,
     riskMultiplier,
     createRng,
     chooseWeighted,
