@@ -7,7 +7,7 @@ En la terminal de windows:
 
 C:\Users\Usuario\Documents\Carrera de Indias\Flota-de-Indias
 git add .
-git commit -m "flota de indias"
+git commit -m "flota de indias 2"
 git push
 
 En el mac:
