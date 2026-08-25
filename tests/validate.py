@@ -2,6 +2,7 @@
 
 from html.parser import HTMLParser
 from pathlib import Path
+import re
 import sys
 
 
@@ -28,6 +29,13 @@ def main() -> int:
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     parser = IdCollector()
     parser.feed(html)
+    interface_revision_ok = (
+        len(re.findall(r'class="phase-tab(?:\s|\")', html)) == 4
+        and "Objetivo de la Corona" not in html
+        and "Compendio 1561–1824" not in html
+        and "pesos" not in html.lower()
+        and 'id="player-role-display">Mercader<' in html
+    )
 
     duplicate_ids = sorted({item for item in parser.ids if parser.ids.count(item) > 1})
     missing_assets = sorted(
@@ -50,6 +58,11 @@ def main() -> int:
         and "fuente canónica y guía principal" in readme
         and canonical_ordinance.name in readme
     )
+    player_rules = ROOT / "REGLAS_DEL_JUEGO.md"
+    player_rules_complete = player_rules.exists() and all(
+        heading in player_rules.read_text(encoding="utf-8")
+        for heading in ("## 2. Objetivo de la partida", "## 4. Las cuatro estaciones", "## 10. Una primera expedición recomendada")
+    )
 
     replacement_errors = []
     text_suffixes = {".html", ".css", ".js", ".json", ".md", ".svg", ".py"}
@@ -68,6 +81,8 @@ def main() -> int:
         "CSS desequilibrado": [] if css_balanced else ["css/styles.css"],
         "matriz de la Real Cédula incompleta": [] if report_complete else [str(implementation_report)],
         "fuente canónica no declarada": [] if canonical_source_declared else [str(canonical_ordinance)],
+        "reglas para jugadores incompletas": [] if player_rules_complete else [str(player_rules)],
+        "revisión de interfaz incompleta": [] if interface_revision_ok else ["index.html"],
     }
     active_failures = {name: values for name, values in failures.items() if values}
     if active_failures:

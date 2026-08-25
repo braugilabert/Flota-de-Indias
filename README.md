@@ -24,6 +24,9 @@ separado como banco de hipótesis y cifras experimentales.
 La correspondencia verificable entre cada apartado y las mecánicas está en
 [`docs/IMPLEMENTACION_REAL_CEDULA.md`](docs/IMPLEMENTACION_REAL_CEDULA.md).
 
+Si es tu primera partida, comienza por
+[`REGLAS_DEL_JUEGO.md`](REGLAS_DEL_JUEGO.md), la guía breve para jugadores.
+
 ## Ejecutar
 
 No necesita instalar dependencias. Desde la carpeta del proyecto:
@@ -59,6 +62,7 @@ el tornaviaje sin quebrar la Real Compañía. El resultado combina:
 ```text
 .
 ├── index.html
+├── REGLAS_DEL_JUEGO.md
 ├── assets/
 │   └── favicon.svg
 ├── css/
@@ -102,4 +106,4 @@ python tests/validate.py
 ```
 
 Con el servidor local en marcha, `tests/browser-smoke.html` recorre también
-automáticamente las cinco fases en un navegador real.
+automáticamente las cuatro estaciones y la liquidación en un navegador real.

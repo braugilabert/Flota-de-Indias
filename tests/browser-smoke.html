@@ -51,6 +51,19 @@
       frame.contentWindow.addEventListener("error", (event) => errors.push(event.message));
       const doc = frame.contentDocument;
       const visited = [activePhase(doc)];
+      if (doc.querySelectorAll(".phase-tab[data-phase]").length !== 4) throw new Error("La interfaz no muestra las cuatro estaciones.");
+      if (doc.getElementById("goal-display") || doc.getElementById("goal-progress")) throw new Error("El antiguo objetivo de la Corona sigue presente.");
+      if (doc.getElementById("player-role-display").textContent.trim() !== "Mercader") throw new Error("El jugador no comienza como mercader.");
+      if (doc.body.textContent.includes("pesos")) throw new Error("La interfaz todavía muestra pesos en vez de reales.");
+      const departure = doc.getElementById("departure-select");
+      departure.value = "sevilla";
+      departure.dispatchEvent(new Event("change", { bubbles: true }));
+      if (!doc.getElementById("departure-effect").textContent.includes("6 %") || !doc.getElementById("departure-effect").textContent.includes("2 jornadas")) {
+        throw new Error("Sevilla no muestra sus efectos mercantiles y fluviales.");
+      }
+      departure.value = "cadiz";
+      departure.dispatchEvent(new Event("change", { bubbles: true }));
+      if (!doc.getElementById("departure-effect").textContent.includes("800 reales")) throw new Error("Cádiz no muestra su ventaja de apresto.");
 
       const dispatch = doc.getElementById("dispatch-button");
       if (dispatch.disabled) throw new Error(`Despacho bloqueado: ${doc.getElementById("dispatch-validation").textContent}`);
@@ -85,7 +98,8 @@
 
       return {
         status: "PASS",
-        phases: visited,
+        seasons: ["primavera", "verano", "otoño", "invierno", "cierre"],
+        internalSteps: visited,
         treasury: doc.getElementById("treasury-display").textContent,
         settlement: settlement.replace(/\s+/g, " "),
         logEntries: doc.querySelectorAll("#scribe-log-list li").length,
@@ -102,4 +116,3 @@
   </script>
 </body>
 </html>
-

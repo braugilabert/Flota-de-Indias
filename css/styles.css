@@ -372,7 +372,7 @@ h3 {
 
 .state-ribbon {
   display: grid;
-  grid-template-columns: minmax(155px, 0.65fr) minmax(540px, 2.4fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(155px, 0.65fr) minmax(540px, 2.4fr);
   gap: clamp(1rem, 2.5vw, 2rem);
   align-items: center;
   padding: 1rem clamp(1rem, 3vw, 2.6rem);
@@ -442,19 +442,6 @@ h3 {
   color: var(--green);
 }
 
-.common-goal {
-  min-width: 0;
-}
-
-.common-goal strong {
-  display: block;
-  margin-top: 0.3rem;
-  color: var(--ink-soft);
-  font-size: 0.72rem;
-  text-align: right;
-}
-
-.goal-meter,
 .voyage-progress {
   position: relative;
   overflow: hidden;
@@ -464,7 +451,6 @@ h3 {
   border-radius: 999px;
 }
 
-.goal-meter span,
 .voyage-progress span {
   display: block;
   width: 0;
@@ -484,11 +470,21 @@ h3 {
 
 .phase-navigation ol {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   max-width: 1120px;
   margin: 0 auto;
   padding: 0;
   list-style: none;
+}
+
+.port-effect {
+  margin-top: .65rem;
+  padding: .7rem .8rem;
+  color: var(--ink-soft);
+  background: rgba(49, 87, 107, .08);
+  border-left: 3px solid var(--navy-light);
+  font-size: .82rem;
+  line-height: 1.45;
 }
 
 .phase-navigation li {
@@ -1905,11 +1901,6 @@ output {
     grid-row: 2;
   }
 
-  .common-goal {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
   .phase-tab__copy small {
     display: none;
   }
@@ -1970,7 +1961,6 @@ output {
   }
 
   .campaign-date,
-  .common-goal,
   .state-metrics {
     grid-column: 1;
     grid-row: auto;

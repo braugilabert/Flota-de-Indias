@@ -41,16 +41,16 @@
     </header>
 
     <section class="state-ribbon" aria-label="Estado de la campaña">
-      <div class="campaign-date">
-        <span class="state-label">Año de la Cédula</span>
-        <strong id="year-display">1720</strong>
+      <div class="campaign-date merchant-status">
+        <span class="state-label">Condición inicial</span>
+        <strong id="player-role-display">Mercader</strong>
         <span id="turn-display">Expedición I</span>
       </div>
 
       <dl class="state-metrics">
         <div class="metric metric--treasury">
           <dt>Tesorería</dt>
-          <dd><span id="treasury-display">12.000</span> <small>pesos</small></dd>
+          <dd><span id="treasury-display">12.000</span> <small>reales</small></dd>
         </div>
         <div class="metric metric--reputation">
           <dt>Reputación</dt>
@@ -58,7 +58,7 @@
         </div>
         <div class="metric metric--fleet">
           <dt>Valor de flota</dt>
-          <dd><span id="fleet-value-display">0</span> <small>pesos</small></dd>
+          <dd><span id="fleet-value-display">0</span> <small>reales</small></dd>
         </div>
         <div class="metric metric--season">
           <dt>Estación</dt>
@@ -66,45 +66,32 @@
         </div>
       </dl>
 
-      <div class="common-goal">
-        <span class="state-label">Objetivo de la Corona</span>
-        <div class="goal-meter" aria-label="Progreso hacia el objetivo común">
-          <span id="goal-progress" style="width: 0%"></span>
-        </div>
-        <strong id="goal-display">0 / 18.000 pesos</strong>
-      </div>
     </section>
 
-    <nav class="phase-navigation" aria-label="Fases de la expedición">
+    <nav class="phase-navigation" aria-label="Cuatro estaciones de la expedición">
       <ol>
         <li>
           <button class="phase-tab is-active" id="phase-tab-despacho" type="button" data-phase="despacho" aria-controls="phase-despacho" aria-current="step">
             <span class="phase-tab__number">I</span>
-            <span class="phase-tab__copy"><small>Preparación</small>Despacho</span>
+            <span class="phase-tab__copy"><small>Primavera</small>Despacho y salida</span>
           </button>
         </li>
         <li>
           <button class="phase-tab" id="phase-tab-ida" type="button" data-phase="ida" aria-controls="phase-ida" disabled>
             <span class="phase-tab__number">II</span>
-            <span class="phase-tab__copy"><small>Océano</small>Travesía de ida</span>
+            <span class="phase-tab__copy"><small>Verano</small>Travesía de ida</span>
           </button>
         </li>
         <li>
           <button class="phase-tab" id="phase-tab-mercado" type="button" data-phase="mercado" aria-controls="phase-mercado" disabled>
             <span class="phase-tab__number">III</span>
-            <span class="phase-tab__copy"><small>Ultramar</small>Mercado americano</span>
+            <span class="phase-tab__copy"><small>Otoño</small>Feria americana</span>
           </button>
         </li>
         <li>
           <button class="phase-tab" id="phase-tab-tornaviaje" type="button" data-phase="tornaviaje" aria-controls="phase-tornaviaje" disabled>
             <span class="phase-tab__number">IV</span>
-            <span class="phase-tab__copy"><small>Regreso</small>Tornaviaje</span>
-          </button>
-        </li>
-        <li>
-          <button class="phase-tab" id="phase-tab-liquidacion" type="button" data-phase="liquidacion" aria-controls="phase-liquidacion" disabled>
-            <span class="phase-tab__number">V</span>
-            <span class="phase-tab__copy"><small>Balance</small>Liquidación</span>
+            <span class="phase-tab__copy"><small>Invierno</small>Invernada y regreso</span>
           </button>
         </li>
       </ol>
@@ -147,7 +134,7 @@
           <dl>
             <div><dt>Escolta</dt><dd id="escort-display">0 cañones</dd></div>
             <div><dt>Provisiones</dt><dd id="supplies-display">0 jornadas</dd></div>
-            <div><dt>Avería común</dt><dd id="averia-display">0 pesos</dd></div>
+            <div><dt>Avería común</dt><dd id="averia-display">0 reales</dd></div>
             <div><dt>Moral</dt><dd id="morale-display">Serena</dd></div>
           </dl>
         </div>
@@ -170,7 +157,7 @@
         <section class="phase-panel is-active" id="phase-despacho" data-phase-panel="despacho" aria-labelledby="despacho-heading">
           <header class="phase-header">
             <div>
-              <p class="eyebrow">Fase I · Casa de Contratación</p>
+              <p class="eyebrow">Estación I · Primavera en España</p>
               <h2 id="despacho-heading">Despacho de la flota</h2>
               <p>Elegid la ruta, fletad los navíos y distribuid el capital sin descuidar la protección común.</p>
             </div>
@@ -194,11 +181,15 @@
                 <option value="cadiz">Cádiz</option>
                 <option value="sevilla">Sevilla y barra de Sanlúcar</option>
               </select>
+              <div class="port-effect" id="departure-effect" aria-live="polite">
+                <strong>Cádiz:</strong> salida oceánica más ágil y mejor apresto naval.
+              </div>
               <div class="route-details" id="route-details">
                 <dl>
                   <div><dt>Distancia</dt><dd>3.900 millas</dd></div>
                   <div><dt>Riesgo</dt><dd><span class="risk risk--medium">Medio</span></dd></div>
                   <div><dt>Demanda prevista</dt><dd>Vino y herramientas</dd></div>
+                  <div><dt>Calendario</dt><dd id="route-calendar">Salida de mayo; invernada en Indias; regreso desde marzo.</dd></div>
                 </dl>
               </div>
               <fieldset class="segmented-fieldset" id="regime-control">
@@ -269,7 +260,7 @@
                 <label for="cargo-budget">Capital destinado a mercancías</label>
                 <div class="range-row">
                   <input id="cargo-budget" name="cargo-budget" type="range" min="5000" max="80000" step="1000" value="36000">
-                  <output id="cargo-budget-output" for="cargo-budget">36.000 pesos</output>
+                  <output id="cargo-budget-output" for="cargo-budget">36.000 reales</output>
                 </div>
               </div>
             </section>
@@ -307,7 +298,7 @@
                 <div><dt>Fletamento y apresto</dt><dd>0</dd></div>
                 <div><dt>Carga registrada</dt><dd>4.000</dd></div>
                 <div><dt>Avería y protección</dt><dd>1.680</dd></div>
-                <div class="cost-ledger__total"><dt>Total comprometido</dt><dd id="dispatch-total">5.680 pesos</dd></div>
+                <div class="cost-ledger__total"><dt>Total comprometido</dt><dd id="dispatch-total">5.680 reales</dd></div>
               </dl>
               <button class="button button--primary button--full" id="dispatch-button" type="button">Solicitar despacho y zarpar</button>
               <p class="validation-note" id="dispatch-validation">Falta fletar al menos un navío.</p>
@@ -318,7 +309,7 @@
         <section class="phase-panel" id="phase-ida" data-phase-panel="ida" aria-labelledby="outbound-heading" hidden>
           <header class="phase-header">
             <div>
-              <p class="eyebrow">Fase II · Mar Océano</p>
+              <p class="eyebrow">Estación II · Verano en el Mar Océano</p>
               <h2 id="outbound-heading">Travesía de ida</h2>
               <p>Mantened unido el convoy y administrad provisiones, tiempo y disciplina.</p>
             </div>
@@ -376,9 +367,9 @@
         <section class="phase-panel" id="phase-mercado" data-phase-panel="mercado" aria-labelledby="market-heading" hidden>
           <header class="phase-header">
             <div>
-              <p class="eyebrow">Fase III · Feria y contratación</p>
-              <h2 id="market-heading">Mercado americano</h2>
-              <p>Vended la carga peninsular, aprovisionad la flota y registrad el tornaviaje.</p>
+              <p class="eyebrow">Estación III · Otoño americano</p>
+              <h2 id="market-heading">Feria y preparación de la invernada</h2>
+              <p>Vended la carga peninsular, preparad el retorno y dejad la flota lista para pasar el invierno en América.</p>
             </div>
             <span class="phase-stamp phase-stamp--green" id="market-port-stamp">Veracruz</span>
           </header>
@@ -410,14 +401,15 @@
               <div class="game-card__heading">
                 <div><p class="kicker">Cuenta de puerto</p><h3 id="market-account-heading">Caja disponible</h3></div>
               </div>
-              <strong class="large-balance"><span id="market-cash-display">0</span> <small>pesos</small></strong>
+              <strong class="large-balance"><span id="market-cash-display">0</span> <small>reales</small></strong>
               <dl class="cost-ledger">
                 <div><dt>Ventas realizadas</dt><dd id="market-sales-display">0</dd></div>
                 <div><dt>Compras de retorno</dt><dd id="market-purchases-display">0</dd></div>
                 <div><dt>Derechos y almojarifazgo</dt><dd id="market-tax-display">0</dd></div>
               </dl>
               <button class="button button--secondary button--full" id="buy-supplies-button" type="button">Reponer provisiones</button>
-              <button class="button button--primary button--full" id="depart-america-button" type="button">Cerrar registro y partir</button>
+              <button class="button button--primary button--full" id="depart-america-button" type="button">Invernar y partir en primavera</button>
+              <p class="field-hint">La invernada cuesta 3.000 reales y permite carenar, reponer víveres y concentrar el convoy.</p>
             </aside>
           </div>
         </section>
@@ -425,9 +417,9 @@
         <section class="phase-panel" id="phase-tornaviaje" data-phase-panel="tornaviaje" aria-labelledby="return-heading" hidden>
           <header class="phase-header">
             <div>
-              <p class="eyebrow">Fase IV · Concentración en La Habana</p>
-              <h2 id="return-heading">Tornaviaje</h2>
-              <p>Proteged la carga de retorno: la riqueza acumulada atrae enemigos y multiplica las consecuencias de cada decisión.</p>
+              <p class="eyebrow">Estación IV · Invernada y primavera siguiente</p>
+              <h2 id="return-heading">Concentración en La Habana y tornaviaje</h2>
+              <p>Tras pasar el invierno en América, la flota concentrada parte en primavera. Proteged la carga de retorno.</p>
             </div>
             <span class="phase-stamp phase-stamp--blue">Rumbo a levante</span>
           </header>
@@ -470,7 +462,7 @@
               <div class="game-card__heading">
                 <div><p class="kicker">Carga de mayor valor</p><h3 id="return-cargo-heading">Tesoro registrado</h3></div>
               </div>
-              <strong class="large-balance"><span id="return-cargo-value">0</span> <small>pesos</small></strong>
+              <strong class="large-balance"><span id="return-cargo-value">0</span> <small>reales</small></strong>
               <dl class="report-grid report-grid--compact">
                 <div><dt>Plata</dt><dd id="silver-display">0 t</dd></div>
                 <div><dt>Mercancías</dt><dd id="return-goods-display">0 t</dd></div>
@@ -484,7 +476,7 @@
         <section class="phase-panel" id="phase-liquidacion" data-phase-panel="liquidacion" aria-labelledby="settlement-heading" hidden>
           <header class="phase-header">
             <div>
-              <p class="eyebrow">Fase V · Consulado y Real Audiencia</p>
+              <p class="eyebrow">Cierre del ciclo · Consulado y Real Audiencia</p>
               <h2 id="settlement-heading">Liquidación de la expedición</h2>
               <p>Rendid cuentas, distribuid beneficios y resolved las reclamaciones conforme al registro.</p>
             </div>
@@ -508,7 +500,7 @@
                   <tbody id="settlement-table-body">
                     <tr class="empty-row"><td colspan="3">Sin movimientos que liquidar.</td></tr>
                   </tbody>
-                  <tfoot><tr><th scope="row">Resultado neto</th><td></td><td id="net-result-display">0 pesos</td></tr></tfoot>
+                  <tfoot><tr><th scope="row">Resultado neto</th><td></td><td id="net-result-display">0 reales</td></tr></tfoot>
                 </table>
               </div>
             </section>
@@ -562,13 +554,13 @@
     <div class="dialog-body">
       <nav class="help-nav" aria-label="Secciones de ayuda">
         <button class="is-active" type="button" data-help-section="principios">Principios</button>
-        <button type="button" data-help-section="fases">Las cinco fases</button>
+        <button type="button" data-help-section="fases">Las cuatro estaciones</button>
         <button type="button" data-help-section="ordenanzas">Ordenanzas</button>
       </nav>
       <div class="help-content" id="help-content">
         <section data-help-panel="principios">
           <h3>Prosperidad común, decisiones difíciles</h3>
-          <p>Debéis traer a salvo una flota rentable. La tesorería sufraga los gastos comunes; la reputación mide la confianza de la Corona y los comerciantes.</p>
+          <p>Empezáis como mercaderes y debéis traer a salvo una flota rentable. La tesorería sufraga los gastos comunes; la reputación mide la confianza de la Compañía y los comerciantes.</p>
           <ul>
             <li>Una flota bien protegida cuesta más, pero limita pérdidas catastróficas.</li>
             <li>Solo la carga registrada puede venderse legalmente o ser indemnizada.</li>

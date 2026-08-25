@@ -132,16 +132,23 @@ sin pagarla si obtiene mayoría simple de los miembros presentes.
 
 ## 6. Secuencia de juego
 
-Una partida sigue seis fases obligatorias:
+Una partida sigue cuatro estaciones obligatorias y un cierre contable:
 
-1. Consejo y financiación.
-2. Despacho y certificación.
-3. Viaje de ida.
-4. Comercio y preparación americana.
-5. Tornaviaje.
-6. Liquidación y Real Audiencia.
+1. **Primavera:** consejo, financiación, despacho y salida.
+2. **Verano:** travesía de ida.
+3. **Otoño:** comercio y preparación americana.
+4. **Invierno:** invernada, concentración y apresto; el tornaviaje comienza al
+   abrirse la primavera siguiente.
 
-No se puede volver a una fase cerrada salvo que una carta o decisión lo diga
+La liquidación y la Real Audiencia cierran el ciclo, pero no constituyen una
+quinta estación.
+
+El calendario visible distingue la salida histórica de mayo para Nueva España
+y la de agosto para Tierra Firme. El modelo estacional resume fechas variables:
+ambas rutas invernan en Indias y preparan la concentración en La Habana para el
+regreso desde marzo.
+
+No se puede volver a una estación cerrada salvo que una carta o decisión lo diga
 expresamente. Toda transacción confirmada genera un asiento del Escribano.
 
 ## 7. Consejo y financiación
@@ -158,6 +165,19 @@ El jugador elige una de las dos rutas disponibles. Cada una informa de:
 
 La elección no activa una época histórica diferente: ambas rutas pertenecen al
 mismo compendio normativo.
+
+#### 7.1.1. Puerto de despacho
+
+Todo jugador empieza como mercader y escoge una de estas cabeceras:
+
+- **Cádiz:** salida oceánica y apresto naval más eficientes; descuenta 800
+  reales del despacho, no añade demora y concede 6 puntos de información.
+- **Sevilla y Sanlúcar:** su red mercantil aumenta un 6 % el valor efectivo de
+  la carga, pero la navegación del Guadalquivir y la barra añaden 2 jornadas;
+  concede 2 puntos de información.
+
+Los valores son convenciones de balance inspiradas en la función histórica de
+ambos puertos, no porcentajes documentales.
 
 ### 7.2. Orden de financiación
 

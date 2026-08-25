@@ -103,9 +103,12 @@ normas por otras.
 
 ## 5. Papel del jugador
 
-En la v0.1 el jugador representa de forma agregada a la junta de la Real
-Compañía. Decide por el Consulado, la Universidad y los mandos navales. Es una
-simplificación consciente para probar el sistema sin exigir varios jugadores.
+Todo jugador comienza con la condición de **mercader**. Desde ella organiza su
+primera expedición y puede solicitar después el ingreso como miembro de la Real
+Compañía si reúne reputación y compromiso de secreto. En la v0.1 ese mercader
+ejerce de forma agregada las decisiones de la junta, el Consulado, la
+Universidad y los mandos navales. Es una simplificación consciente para probar
+el sistema sin exigir varios jugadores.
 
 El juego debe conservar la separación conceptual entre cargos:
 
@@ -126,22 +129,22 @@ v0.1 son pestañas o pasos de una misma interfaz.
 ## 6. Bucle de una partida
 
 ```text
-Consejo y financiación
+Primavera · Consejo, financiación y despacho
         ↓
-Despacho y certificación
+Verano · Travesía de ida
         ↓
-Travesía de ida
+Otoño · Comercio y reorganización en América
         ↓
-Comercio y reorganización en América
+Invierno · Invernada, concentración y apresto
         ↓
-Tornaviaje
+Primavera siguiente · Tornaviaje
         ↓
-Liquidación, seguros y Audiencia
+Cierre · Liquidación, seguros y Audiencia
         ↓
 Resultado y libro histórico
 ```
 
-### Fase 1 — Consejo y financiación
+### Estación 1 — Primavera: consejo, financiación y despacho
 
 1. Elegir una de las dos rutas comerciales.
 2. Examinar demanda, distancia y riesgo estimado.
@@ -149,25 +152,22 @@ Resultado y libro histórico
 4. Abrir participaciones si la tesorería no basta o se desea trasladar parte del
    riesgo asegurador.
 5. Reservar fondos para escolta, avería, tributo, seguro y contingencias.
-
-### Fase 2 — Despacho y certificación
-
-1. Inscribir mercantes y decidir qué barcos actuarán como escolta o aviso.
-2. Designar nave capitana, nave almiranta, Capitán General, Almirante y
+6. Inscribir mercantes y decidir qué barcos actuarán como escolta o aviso.
+7. Designar nave capitana, nave almiranta, Capitán General, Almirante y
    Escribano.
-3. Dotar cañones y reparaciones mínimas.
-4. Pagar las cantidades correspondientes o registrar una exención válida.
-5. Contratar seguros opcionales.
-6. Solicitar a la Universidad de Mareantes la certificación.
-7. Zarpar, corregir deficiencias, posponer o cancelar.
+8. Dotar cañones y reparaciones mínimas.
+9. Pagar las cantidades correspondientes o registrar una exención válida.
+10. Contratar seguros opcionales.
+11. Solicitar a la Universidad de Mareantes la certificación.
+12. Zarpar, corregir deficiencias, posponer o cancelar.
 
-### Fase 3 — Viaje de ida
+### Estación 2 — Verano: viaje de ida
 
 Cada tramo presenta información parcial y una decisión: conservar la formación,
 destacar avisos, variar la ruta, auxiliar un rezagado, afrontar un temporal o
 responder a un enemigo. Las decisiones consumen tiempo, pertrechos o cohesión.
 
-### Fase 4 — Comercio americano
+### Estación 3 — Otoño: comercio americano
 
 1. Vender mercancías según demanda y saturación.
 2. Pagar o cobrar el Tributo Real aplicable.
@@ -177,13 +177,19 @@ responder a un enemigo. Las decisiones consumen tiempo, pertrechos o cohesión.
 6. Admitir incorporaciones para el tornaviaje y recaudar la media avería cuando
    proceda.
 
-### Fase 5 — Tornaviaje
+### Estación 4 — Invierno: invernada y apresto
+
+La flota permanece en América, repara casco y aparejo, repone víveres y se
+concentra para el regreso. La invernada tiene un coste propio. Al abrirse la
+primavera siguiente comienza el tornaviaje.
+
+### Tornaviaje — Primavera siguiente
 
 Antes de salir se comprueba el mínimo de protección. La flota afronta nuevos
 tramos con una carga más valiosa y, normalmente, menos margen para reparar. Si
 faltan el Capitán General o el Almirante se aplica la sucesión prevista.
 
-### Fase 6 — Liquidación y Audiencia
+### Cierre del ciclo — Liquidación y Audiencia
 
 1. Vender o valorar la carga retornada.
 2. Pagar escolta pendiente y servicios.
@@ -356,8 +362,8 @@ afectados.
 
 ### Representado de forma simplificada
 
-- El jugador acumula las funciones de todos los cargos.
-- El tiempo se divide en fases y tramos, no en días de navegación.
+- El mercader jugador acumula las funciones de varios cargos.
+- El tiempo se divide en cuatro estaciones y tramos, no en un calendario diario completo.
 - Los barcos usan estadísticas agregadas, no modelos náuticos detallados.
 - La carga usa familias mercantiles, no catálogos históricos exhaustivos.
 - Las participaciones se emiten y liquidan dentro de una partida.
@@ -373,20 +379,23 @@ afectados.
 - Construcción detallada de navíos y tripulaciones individuales.
 - Política internacional completa, conquista de puertos y guerra territorial.
 - Mercado abierto entre jugadores y reventa persistente de participaciones.
-- Exámenes de ingreso y administración social del clan.
+- Administración social completa del clan.
 - Simulación de todos los impuestos históricos por separado.
 
 ## 10. Decisiones de simplificación
 
 | Decisión v0.1 | Motivo | Conserva de la Real Cédula |
 | --- | --- | --- |
-| Un jugador representa la junta | Permite probar el bucle sin red ni negociación humana. | Separación visible de Consulado, Universidad, mandos, Escribano y Audiencia. |
+| Todo jugador comienza como mercader y agrega funciones de la junta | Da una identidad inicial clara sin exigir red ni negociación humana. | Distingue mercader, miembro, Consulado, Universidad, mandos, Escribano y Audiencia. |
 | Estadísticas agregadas de barco | Evita convertir el prototipo en simulador naval. | Diferencia mercante, escolta, aviso, capitana y almiranta. |
 | Dos rutas | Hace comparables riesgo y rentabilidad. | Pluralidad de destinos y agentes del sistema compendiado. |
 | Un Tributo Real principal | Mantiene legibles las cuentas. | Pago por carga de Cargadores o transporte de Portadores. |
 | Riesgo por tramos | Produce decisiones breves y trazables. | Ida, escalas, puerto de vuelta y tornaviaje. |
 | Participaciones por expedición | Evita una bolsa persistente en la primera versión. | Financiación privada y asunción proporcional de riesgo. |
 | Audiencia mediante expedientes | Conecta norma y prueba sin exigir interpretación libre. | Reclamación, diligencia, prueba, recusación y revisión. |
+| Cuatro estaciones e invernada | Hace legible el calendario y representa la permanencia de los navíos en América antes del regreso. | Despacho, ida, feria, invernada, concentración y tornaviaje. |
+| Sin objetivo monetario de la Corona | El antiguo umbral de 18.000 reales duplicaba la liquidación y no procedía de una obligación expresa de la Cédula. | La solvencia, el retorno, la reputación y el cumplimiento siguen determinando el resultado. |
+| Cádiz y Sevilla con efectos distintos | Convierte la cabecera de despacho en una decisión real. | Cádiz aporta salida oceánica; Sevilla aporta red mercantil y el coste de la navegación fluvial. |
 
 Estas convenciones son revisables mediante pruebas. No alteran la decisión
 estructural de usar simultáneamente el compendio de reformas.

@@ -14,6 +14,24 @@
     cargoInsuranceRate: (Number(configuredRates.cargoInsurancePercent) || 10) / 100,
     hullInsuranceRate: (Number(configuredRates.hullInsurancePercent) || 10) / 100,
   };
+  const PORT_EFFECTS = Object.freeze({
+    cadiz: {
+      name: "Cádiz",
+      portAdjustment: -800,
+      cargoMultiplier: 1,
+      initialDelay: 0,
+      informationBonus: 6,
+      description: "Cádiz: salida oceánica más ágil, 800 reales menos de apresto y +6 de información naval.",
+    },
+    sevilla: {
+      name: "Sevilla y barra de Sanlúcar",
+      portAdjustment: 0,
+      cargoMultiplier: 1.06,
+      initialDelay: 2,
+      informationBonus: 2,
+      description: "Sevilla: la red mercantil mejora un 6 % el valor de la carga, pero el descenso del Guadalquivir y la barra añaden 2 jornadas.",
+    },
+  });
   const PROFILES = {
     equilibrada: { name: "Flota equilibrada", merchantCount: 3, escortCount: 2, avisoCount: 1, shipValue: 105000 },
     mercante: { name: "Gran convoy mercante", merchantCount: 5, escortCount: 2, avisoCount: 0, shipValue: 145000 },
@@ -91,7 +109,7 @@
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
   const byId = (id) => document.getElementById(id);
   const formatNumber = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
-  const formatMoney = { format: (value) => `${formatNumber.format(Number(value) || 0)} pesos` };
+  const formatMoney = { format: (value) => `${formatNumber.format(Number(value) || 0)} reales` };
 
   function collection(value) {
     if (Array.isArray(value)) return value;
@@ -142,7 +160,6 @@
       treasury: 180000,
       reputation: 55,
       fleetValue: 0,
-      goalValue: 0,
       routeId: routes()[0].id,
       departure: "cadiz",
       mode: "flota",
@@ -157,7 +174,8 @@
       secrecy: 70,
       diplomacy: 0,
       strategicMerit: 0,
-      memberStatus: "aspirante",
+      memberStatus: "mercader",
+      wintered: false,
       insurance: true,
       dispatch: null,
       cargoValue: 0,
@@ -190,7 +208,10 @@
   function loadState() {
     try {
       const parsed = JSON.parse(localStorage.getItem(SAVE_KEY));
-      if (parsed && parsed.version === 1) return defaultState(parsed);
+      if (parsed && parsed.version === 1) {
+        if (!parsed.memberStatus || parsed.memberStatus === "aspirante") parsed.memberStatus = "mercader";
+        return defaultState(parsed);
+      }
     } catch (error) {
       console.warn("No se pudo leer la partida guardada", error);
     }
@@ -260,9 +281,14 @@
       ? route.outboundLegs || route.outbound || route.ida
       : route.returnLegs || route.return || route.tornaviaje;
     if (Array.isArray(direct) && direct.length) {
-      return direct.map((leg) => typeof leg === "string"
+      const normalized = direct.map((leg) => typeof leg === "string"
         ? leg
         : leg.name || leg.label || (leg.from && leg.to ? `${portName(leg.from)} → ${portName(leg.to)}` : leg.id));
+      if (state.departure === "sevilla" && normalized.length) {
+        if (direction === "ida") normalized[0] = normalized[0].replace(/^.*?→/, "Sanlúcar →");
+        else normalized[normalized.length - 1] = normalized[normalized.length - 1].replace(/→.*$/, "→ Sanlúcar/Sevilla");
+      }
+      return normalized;
     }
     const stops = route.stops || route.ports;
     if (Array.isArray(stops) && stops.length > 1) {
@@ -324,7 +350,7 @@
           <option value="defensa">Defensa de puerto y convoy</option><option value="presa">Presa autorizada</option>
         </select></label>
         <label>Préstamo particular limitado<select id="loan-select">
-          <option value="0">Sin préstamo</option><option value="10000">10.000 pesos</option><option value="20000">20.000 pesos</option><option value="30000">30.000 pesos</option>
+          <option value="0">Sin préstamo</option><option value="10000">10.000 reales</option><option value="20000">20.000 reales</option><option value="30000">30.000 reales</option>
         </select></label>
         <label>Custodia del secreto<select id="secrecy-select">
           <option value="90">Secreto estricto</option><option value="70">Reserva ordinaria</option><option value="45">Noticias a aliados</option>
@@ -401,6 +427,23 @@
     });
   }
 
+  function currentPortEffect() {
+    return PORT_EFFECTS[state.departure] || PORT_EFFECTS.cadiz;
+  }
+
+  function adjustedDispatch(plan) {
+    const calculation = ENGINE.calculateDispatch(plan, GAME_RULES);
+    if (plan.incorporation === "asiento") calculation.averia *= 2;
+    if (plan.incorporation === "conserva") {
+      calculation.averia = 0;
+      calculation.insurance = 0;
+    }
+    calculation.portAdjustment = currentPortEffect().portAdjustment;
+    calculation.grossCost = ENGINE.money(plan.cargoBudget + calculation.averia + calculation.tribute + calculation.escort + calculation.supplies + calculation.insurance + calculation.portAdjustment);
+    calculation.treasuryCost = ENGINE.money(calculation.grossCost - calculation.acceptedParticipations);
+    return calculation;
+  }
+
   function syncPlanState() {
     const plan = planFromControls();
     state.routeId = byId("route-select") ? byId("route-select").value : state.routeId;
@@ -428,14 +471,7 @@
       certification.approved = false;
       certification.problems.push("Falta la certificación obligatoria de la Universidad de Mareantes.");
     }
-    const calculation = ENGINE.calculateDispatch(plan, GAME_RULES);
-    if (plan.incorporation === "asiento") calculation.averia *= 2;
-    if (plan.incorporation === "conserva") {
-      calculation.averia = 0;
-      calculation.insurance = 0;
-    }
-    calculation.grossCost = ENGINE.money(plan.cargoBudget + calculation.averia + calculation.tribute + calculation.escort + calculation.supplies + calculation.insurance);
-    calculation.treasuryCost = ENGINE.money(calculation.grossCost - calculation.acceptedParticipations);
+    const calculation = adjustedDispatch(plan);
     const finance = ENGINE.calculateFinance({ loan: state.loan }, state.treasury, GAME_RULES);
     const budgetOutput = byId("cargo-budget-output");
     if (budgetOutput) budgetOutput.textContent = formatMoney.format(plan.cargoBudget);
@@ -461,6 +497,7 @@
           <div><dt>Seguro</dt><dd>${formatMoney.format(calculation.insurance)}</dd></div>
           <div><dt>Participaciones</dt><dd>−${formatMoney.format(calculation.acceptedParticipations)}</dd></div>
           <div><dt>Préstamo particular</dt><dd>−${formatMoney.format(finance.loan)} · deuda ${formatMoney.format(finance.debtDue)}</dd></div>
+          <div><dt>Ajuste del puerto</dt><dd>${calculation.portAdjustment < 0 ? "−" : ""}${formatMoney.format(Math.abs(calculation.portAdjustment))}</dd></div>
           <div class="total cost-ledger__total"><dt>Cargo a tesorería</dt><dd>${formatMoney.format(calculation.treasuryCost)}</dd></div>`;
     }
     const institutions = byId("institution-status");
@@ -502,22 +539,31 @@
     }
     const advanced = byId("advanced-status");
     if (advanced) advanced.textContent = `Universidad: ${state.universityPassed ? "examen aprobado" : "pendiente"} · condición: ${state.memberStatus} · secreto ${state.secrecy}/100 · misión: ${state.strategicMission}.`;
+    const departureEffect = byId("departure-effect");
+    if (departureEffect) departureEffect.textContent = currentPortEffect().description;
+    const routeCalendar = byId("route-calendar");
+    if (routeCalendar) {
+      routeCalendar.textContent = state.routeId === "tierra-firme"
+        ? "Salida histórica de agosto; invernada en Indias; concentración en La Habana y regreso desde marzo."
+        : "Salida histórica de mayo; invernada en Indias; concentración en La Habana y regreso desde marzo.";
+    }
   }
 
   function updateHeader() {
-    setText("year-display", "Compendio 1561–1824");
     setText("turn-display", `Expedición ${state.expedition}`);
+    setText("player-role-display", state.memberStatus === "miembro" ? "Mercader · miembro" : "Mercader");
     setText("treasury-display", formatNumber.format(state.treasury));
     setText("reputation-display", Math.round(state.reputation));
     setText("fleet-value-display", formatNumber.format(state.fleetValue));
-    setText("goal-display", `${formatNumber.format(Math.min(18000, state.goalValue || 0))} / 18.000 pesos`);
-    const goal = byId("goal-progress");
-    if (goal) goal.style.width = `${ENGINE.clamp((state.goalValue || 0) / 180, 0, 100)}%`;
+    const seasons = { despacho: "Primavera", ida: "Verano", mercado: "Otoño", tornaviaje: "Invierno → primavera", liquidacion: "Cierre del ciclo" };
+    setText("season-display", seasons[state.phase] || "Primavera");
     updateFleetSidebar();
   }
 
   function showPhase(phase) {
     state.phase = PHASES.includes(phase) ? phase : "despacho";
+    const seasons = { despacho: "Primavera", ida: "Verano", mercado: "Otoño", tornaviaje: "Invierno → primavera", liquidacion: "Cierre del ciclo" };
+    setText("season-display", seasons[state.phase] || "Primavera");
     PHASES.forEach((name) => {
       const panel = byId(`phase-${name}`);
       if (panel) {
@@ -545,7 +591,7 @@
     if (target) target.style.width = `${Math.round(index / legs.length * 100)}%`;
     const waypoints = byId(outbound ? "outbound-waypoints" : "return-waypoints");
     if (waypoints) {
-      waypoints.innerHTML = [state.departure === "cadiz" ? "Cádiz" : "Sanlúcar"]
+      waypoints.innerHTML = [outbound ? (state.departure === "cadiz" ? "Cádiz" : "Sanlúcar") : "La Habana"]
         .concat(legs.map((leg) => leg.split("→").pop().trim()))
         .map((name, legIndex) => `<li class="${legIndex <= index ? "is-reached" : ""}"><span></span>${escapeHtml(name)}</li>`)
         .join("");
@@ -677,9 +723,9 @@
 
   function requestAdmission() {
     const admitted = state.reputation >= 50 && state.secrecy >= 70;
-    state.memberStatus = admitted ? "miembro" : "aspirante";
+    state.memberStatus = admitted ? "miembro" : "mercader";
     if (admitted) state.reputation = ENGINE.clamp(state.reputation + 2, 0, 100);
-    addLog(admitted ? "Ingreso aprobado por buena fama, propuesta y compromiso de secreto." : "Ingreso aplazado: falta reputación o compromiso de secreto.", "Compañía");
+    addLog(admitted ? "El mercader ingresa como miembro por buena fama, propuesta y compromiso de secreto." : "El mercader conserva su condición: falta reputación o compromiso de secreto para ingresar como miembro.", "Compañía");
     renderDispatch(); updateHeader(); saveState();
   }
 
@@ -713,14 +759,7 @@
     syncPlanState();
     const plan = planFromControls();
     const certification = ENGINE.certifyPlan(plan, "outbound");
-    const calculation = ENGINE.calculateDispatch(plan, GAME_RULES);
-    if (plan.incorporation === "asiento") calculation.averia *= 2;
-    if (plan.incorporation === "conserva") {
-      calculation.averia = 0;
-      calculation.insurance = 0;
-    }
-    calculation.grossCost = ENGINE.money(plan.cargoBudget + calculation.averia + calculation.tribute + calculation.escort + calculation.supplies + calculation.insurance);
-    calculation.treasuryCost = ENGINE.money(calculation.grossCost - calculation.acceptedParticipations);
+    const calculation = adjustedDispatch(plan);
     const finance = ENGINE.calculateFinance({ loan: state.loan }, state.treasury, GAME_RULES);
     const universityAccepted = !byId("university-certification") || byId("university-certification").checked;
     if (plan.mode === "flota" && !universityAccepted) certification.approved = false;
@@ -739,14 +778,16 @@
     state.dispatch = calculation;
     state.treasury = ENGINE.money(finance.available - calculation.treasuryCost);
     state.debtDue = finance.debtDue;
-    state.cargoValue = plan.cargoBudget;
+    const port = currentPortEffect();
+    state.cargoValue = ENGINE.money(plan.cargoBudget * port.cargoMultiplier);
     state.returnCargoValue = 0;
-    state.goalValue = 0;
     state.fleetValue = plan.shipValue;
     state.hull = 100;
     state.sails = 100;
     state.morale = 75;
     state.supplies = 100;
+    state.delay = port.initialDelay;
+    state.information = ENGINE.clamp(35 + port.informationBonus, 0, 100);
     state.cargoLost = 0;
     state.shipsLost = 0;
     state.outboundIndex = 0;
@@ -764,10 +805,12 @@
     state.marketDay = 1;
     state.settlement = null;
     state.audienceResolved = false;
+    state.wintered = false;
     addLog(
       `Despachada ${PROFILES[state.profile].name} desde ${state.departure === "cadiz" ? "Cádiz" : "Sevilla/Sanlúcar"} por el régimen de ${state.mode}.`,
       "despacho"
     );
+    addLog(port.description, "puerto de despacho");
     addLog(
       `Avería ${formatMoney.format(calculation.averia)}; Tributo Real ${formatMoney.format(calculation.tribute)}; seguro ${formatMoney.format(calculation.insurance)}.`,
       "cuentas"
@@ -903,15 +946,25 @@
       setStatus("La flota no cumple la composición mínima del tornaviaje.", "warning");
       return;
     }
-    addLog(`Iniciado el tornaviaje con carga declarada por ${formatMoney.format(state.returnCargoValue)}.`, "tornaviaje");
+    const winteringCost = 3000;
+    if (state.treasury < winteringCost) {
+      setStatus(`Se necesitan ${formatMoney.format(winteringCost)} para mantener, carenar y aprovisionar la flota durante la invernada.`, "warning");
+      return;
+    }
+    state.treasury = ENGINE.money(state.treasury - winteringCost);
+    state.hull = ENGINE.clamp(state.hull + 6, 0, 100);
+    state.sails = ENGINE.clamp(state.sails + 8, 0, 100);
+    state.supplies = ENGINE.clamp(state.supplies + 20, 0, 100);
+    state.wintered = true;
+    addLog(`La flota invernó en América; carena y aprovisionamiento: ${formatMoney.format(winteringCost)}.`, "invernada");
+    addLog(`Al abrirse la primavera se inicia el tornaviaje con carga declarada por ${formatMoney.format(state.returnCargoValue)}.`, "tornaviaje");
     showPhase("tornaviaje");
-    setStatus("La Almiranta cierra la formación. Comienza el tornaviaje.", "success");
+    setStatus("Tras la invernada, la Almiranta cierra la formación y la flota parte en primavera.", "success");
   }
 
   function enterSettlement() {
     const saleMultiplier = 1.52;
     const saleRevenue = ENGINE.money(state.returnCargoValue * saleMultiplier);
-    state.goalValue = saleRevenue;
     state.settlement = ENGINE.calculateSettlement(state, state.dispatch, saleRevenue);
     const missionReward = state.strategicMission === "socorro" ? 4500
       : state.strategicMission === "defensa" ? 3500 + state.strategicMerit * 100
@@ -1085,7 +1138,7 @@
     }
     setText("escort-display", state.dispatch ? `${profile.escortCount} escoltas` : "0 escoltas");
     setText("supplies-display", `${Math.round(state.supplies)} %`);
-    setText("averia-display", state.dispatch ? formatMoney.format(state.dispatch.averia) : "0 pesos");
+    setText("averia-display", state.dispatch ? formatMoney.format(state.dispatch.averia) : "0 reales");
     setText("morale-display", state.morale >= 70 ? "Serena" : state.morale >= 40 ? "Inquieta" : "Quebrantada");
     const totalLegs = routeLegs(route, "ida").length + routeLegs(route, "tornaviaje").length;
     const completed = state.outboundIndex + state.returnIndex;
