@@ -11,8 +11,12 @@ Audiencia.
 
 ## Documento base
 
-La fuente de diseño se conserva en la raíz del proyecto:
-[Real Cédula de la Real Compañía Carrera de Indias.docx](./Real%20C%C3%A9dula%20de%20la%20Real%20Compa%C3%B1%C3%ADa%20Carrera%20de%20Indias.docx).
+La fuente canónica y guía principal del juego es:
+[Real Cédula de la Real Compañía Carrera de Indias.md](./Real%20C%C3%A9dula%20de%20la%20Real%20Compa%C3%B1%C3%ADa%20Carrera%20de%20Indias.md).
+
+El archivo `.docx` se conserva únicamente como documento original de archivo.
+En caso de diferencias de formato o contenido durante el desarrollo, debe
+consultarse y actualizarse primero la versión Markdown.
 
 Los apartados 0–14 gobiernan el prototipo. El apartado 15 se documenta por
 separado como banco de hipótesis y cifras experimentales.

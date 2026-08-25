@@ -22,6 +22,10 @@ La pregunta central de cada partida es:
 
 ## 2. Fuente y jerarquía de reglas
 
+La fuente canónica del proyecto es
+[`Real Cédula de la Real Compañía Carrera de Indias.md`](../Real%20C%C3%A9dula%20de%20la%20Real%20Compa%C3%B1%C3%ADa%20Carrera%20de%20Indias.md).
+La copia `.docx` tiene valor de archivo y no gobierna la implementación.
+
 El diseño distingue tres capas:
 
 1. **Norma consolidada:** apartados 0 a 14 de la Real Cédula. Son la guía

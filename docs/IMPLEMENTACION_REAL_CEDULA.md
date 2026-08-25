@@ -1,6 +1,6 @@
 # Implementación de la Real Cédula en el juego
 
-Fecha de revisión: 25 de agosto de 2026. Este archivo toma como fuente principal `Real Cédula de la Real Compañía Carrera de Indias.docx`. Las reformas históricas se aplican simultáneamente, como orden compuesto, por decisión expresa de diseño. El apartado final de anotaciones se considera material experimental y no norma firme.
+Fecha de revisión: 25 de agosto de 2026. Este archivo toma como fuente canónica y guía principal [`Real Cédula de la Real Compañía Carrera de Indias.md`](../Real%20C%C3%A9dula%20de%20la%20Real%20Compa%C3%B1%C3%ADa%20Carrera%20de%20Indias.md). El `.docx` se conserva únicamente como original de archivo. Las reformas históricas se aplican simultáneamente, como orden compuesto, por decisión expresa de diseño. El apartado final de anotaciones se considera material experimental y no norma firme.
 
 ## Estados
 
@@ -50,4 +50,3 @@ Quedan expresamente fuera de esta ampliación: una Real Audiencia completa, un C
 - `js/game.js`: flujo jugable, examen, membresía, secreto, misiones y registro del Escribano.
 - `docs/REGLAS_COMPENDIADAS.md`: formulación consolidada de las reglas.
 - `docs/DISENO.md`: decisiones de diseño y alcance.
-

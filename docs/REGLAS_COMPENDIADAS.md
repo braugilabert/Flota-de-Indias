@@ -7,6 +7,10 @@ Estas reglas convierten en un sistema jugable los apartados 0 a 14 de la
 las disposiciones inspiradas en 1561, 1564, 1720, 1764, 1765 y 1778 rigen
 **simultáneamente**.
 
+La autoridad documental corresponde a
+[`Real Cédula de la Real Compañía Carrera de Indias.md`](../Real%20C%C3%A9dula%20de%20la%20Real%20Compa%C3%B1%C3%ADa%20Carrera%20de%20Indias.md),
+que es la guía canónica del juego. El `.docx` queda como original archivado.
+
 Por tanto:
 
 - no hay eras, capítulos cronológicos ni desbloqueo de reformas;

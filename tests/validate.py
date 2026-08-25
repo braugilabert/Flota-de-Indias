@@ -43,6 +43,13 @@ def main() -> int:
         f"| {number}." in implementation_report.read_text(encoding="utf-8")
         for number in range(16)
     )
+    canonical_ordinance = ROOT / "Real Cédula de la Real Compañía Carrera de Indias.md"
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    canonical_source_declared = (
+        canonical_ordinance.exists()
+        and "fuente canónica y guía principal" in readme
+        and canonical_ordinance.name in readme
+    )
 
     replacement_errors = []
     text_suffixes = {".html", ".css", ".js", ".json", ".md", ".svg", ".py"}
@@ -60,6 +67,7 @@ def main() -> int:
         "archivos con codificación sospechosa": replacement_errors,
         "CSS desequilibrado": [] if css_balanced else ["css/styles.css"],
         "matriz de la Real Cédula incompleta": [] if report_complete else [str(implementation_report)],
+        "fuente canónica no declarada": [] if canonical_source_declared else [str(canonical_ordinance)],
     }
     active_failures = {name: values for name, values in failures.items() if values}
     if active_failures:
