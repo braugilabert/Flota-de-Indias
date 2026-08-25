@@ -1,0 +1,10 @@
+# Archivos locales del sistema y del editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Dependencias o resultados futuros
+node_modules/
+dist/
+coverage/
+

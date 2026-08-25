@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Prueba integral del prototipo</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem; }
+    pre { background: #102f3d; color: #f6f0dd; padding: 1rem; white-space: pre-wrap; }
+    iframe { width: 1200px; height: 800px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <h1>Prueba integral</h1>
+  <pre id="result">Ejecutando…</pre>
+  <iframe id="game" title="Juego bajo prueba"></iframe>
+  <script>
+    "use strict";
+
+    const pause = (milliseconds = 30) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+    async function waitFor(check, label, attempts = 200) {
+      for (let index = 0; index < attempts; index += 1) {
+        const value = check();
+        if (value) return value;
+        await pause();
+      }
+      throw new Error(`Tiempo agotado: ${label}`);
+    }
+
+    function activePhase(doc) {
+      const panel = Array.from(doc.querySelectorAll("[data-phase-panel]")).find((candidate) => !candidate.hidden);
+      return panel ? panel.dataset.phasePanel : "ninguna";
+    }
+
+    async function resolveOneLeg(doc, buttonId) {
+      const button = doc.getElementById(buttonId);
+      if (!button || button.disabled) return false;
+      button.click();
+      const choice = await waitFor(() => doc.querySelector("#event-dialog [data-event-choice]"), "elección de incidencia");
+      choice.click();
+      await pause();
+      return true;
+    }
+
+    async function run() {
+      localStorage.removeItem("carrera-indias-prototipo-v01");
+      const frame = document.getElementById("game");
+      const errors = [];
+      frame.src = "../index.html";
+      await waitFor(() => frame.contentDocument && frame.contentDocument.documentElement.dataset.gameReady === "true", "carga del juego");
+      frame.contentWindow.addEventListener("error", (event) => errors.push(event.message));
+      const doc = frame.contentDocument;
+      const visited = [activePhase(doc)];
+
+      const dispatch = doc.getElementById("dispatch-button");
+      if (dispatch.disabled) throw new Error(`Despacho bloqueado: ${doc.getElementById("dispatch-validation").textContent}`);
+      dispatch.click();
+      await waitFor(() => activePhase(doc) === "ida", "inicio de la ida");
+      visited.push("ida");
+
+      for (let index = 0; index < 8 && activePhase(doc) === "ida"; index += 1) {
+        await resolveOneLeg(doc, "sail-button");
+      }
+      await waitFor(() => activePhase(doc) === "mercado", "arribada al mercado");
+      visited.push("mercado");
+
+      doc.getElementById("sell-all-button").click();
+      const buy = await waitFor(() => doc.querySelector("[data-buy-good]"), "mercancía de retorno");
+      buy.click();
+      const depart = doc.getElementById("depart-america-button");
+      if (depart.disabled) throw new Error("No se habilitó el tornaviaje tras comprar carga.");
+      depart.click();
+      await waitFor(() => activePhase(doc) === "tornaviaje", "inicio del tornaviaje");
+      visited.push("tornaviaje");
+
+      for (let index = 0; index < 8 && activePhase(doc) === "tornaviaje"; index += 1) {
+        await resolveOneLeg(doc, "return-sail-button");
+      }
+      await waitFor(() => activePhase(doc) === "liquidacion", "liquidación final");
+      visited.push("liquidacion");
+
+      const settlement = doc.getElementById("settlement-summary").textContent.trim();
+      if (!settlement.includes("puntos")) throw new Error("No se calculó la puntuación final.");
+      if (errors.length) throw new Error(`Errores de JavaScript: ${errors.join(" | ")}`);
+
+      return {
+        status: "PASS",
+        phases: visited,
+        treasury: doc.getElementById("treasury-display").textContent,
+        settlement: settlement.replace(/\s+/g, " "),
+        logEntries: doc.querySelectorAll("#scribe-log-list li").length,
+      };
+    }
+
+    run().then((report) => {
+      document.documentElement.dataset.testStatus = "pass";
+      document.getElementById("result").textContent = JSON.stringify(report, null, 2);
+    }).catch((error) => {
+      document.documentElement.dataset.testStatus = "fail";
+      document.getElementById("result").textContent = `FAIL\n${error.stack || error}`;
+    });
+  </script>
+</body>
+</html>
+
