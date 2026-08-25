@@ -32,6 +32,9 @@ Fecha de revisión: 25 de agosto de 2026. Este archivo toma como fuente canónic
 
 ## Sistemas transversales añadidos
 
+- **Carta atlántica dinámica**: mantiene visibles la ruta, la posición aproximada del convoy, las escalas alcanzadas, la estación y el puerto de despacho. La derrota cambia entre Nueva España y Tierra Firme y distingue ida y tornaviaje.
+- **Lectura visual de barcos y mercancías**: mercantes, escoltas y avisos tienen silueta, función y barra de estado; el mercado diferencia cada producto mediante icono y resalta la demanda alta.
+- **Escenas de incidencias**: temporales, averías, navegación, salud y combate reciben una presentación visual; en combate se muestra la disposición simbólica de enemigos, escoltas y mercantes antes de escoger la maniobra.
 - **Combate naval táctico**: encuentros de combate permiten formar línea, proteger mercantes o evadir; se calculan fuerza propia y enemiga, casco, cohesión y pérdida de carga. Las presas solo producen premio adicional cuando la misión fue autorizada.
 - **Servicio estratégico**: comercio, socorro de plazas, defensa de puerto/convoy y presa autorizada generan riesgos y recompensas diferentes.
 - **Información, secreto y diplomacia**: la reserva protege la derrota; compartir información con aliados mejora la relación diplomática a cambio de aumentar la amenaza.
@@ -48,5 +51,6 @@ Quedan expresamente fuera de esta ampliación: una Real Audiencia completa, un C
 - `js/data.js`: normas, reformas, puertos, barcos, mercancías y sucesos.
 - `js/engine.js`: certificación, costes, fiscalidad, financiación, riesgo, combate, seguro y liquidación.
 - `js/game.js`: flujo jugable, examen, membresía, secreto, misiones y registro del Escribano.
+- `assets/atlantic-chart-v1.png`: carta atlántica original usada como fondo del mapa dinámico.
 - `docs/REGLAS_COMPENDIADAS.md`: formulación consolidada de las reglas.
 - `docs/DISENO.md`: decisiones de diseño y alcance.

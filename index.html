@@ -154,6 +154,49 @@
           Preparad una expedición solvente antes de solicitar el despacho.
         </div>
 
+        <figure class="campaign-map" id="campaign-map" data-season="primavera" aria-labelledby="campaign-map-heading">
+          <figcaption class="campaign-map__header">
+            <div>
+              <p class="eyebrow">Carta general de navegación</p>
+              <h2 id="campaign-map-heading">El Mar Océano</h2>
+            </div>
+            <div class="map-season" id="map-season-badge"><span aria-hidden="true">❧</span> Primavera · despacho</div>
+          </figcaption>
+          <div class="campaign-map__canvas">
+            <svg class="map-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <path class="map-route map-route--outbound" id="map-route-outbound" d="M 84 28 C 80 33, 77 39, 72 42 S 39 56, 17 62 S 10 64, 7 65"></path>
+              <path class="map-route map-route--return" id="map-route-return" d="M 7 65 C 10 62, 12 61, 17 62 S 45 39, 62 23 S 77 25, 84 28"></path>
+            </svg>
+
+            <div class="map-weather" id="map-weather" aria-hidden="true">
+              <span class="wind-line wind-line--one">⌁</span>
+              <span class="wind-line wind-line--two">⌁</span>
+              <span class="weather-symbol">☀</span>
+            </div>
+
+            <button class="map-port map-port--spain is-active" type="button" data-map-port="spain" aria-label="Puerto de despacho: Cádiz"><span></span><b id="map-port-spain">Cádiz</b></button>
+            <button class="map-port map-port--canaries" type="button" data-map-port="canarias" aria-label="Islas Canarias"><span></span><b>Canarias</b></button>
+            <button class="map-port map-port--azores" type="button" data-map-port="azores" aria-label="Islas Azores"><span></span><b>Azores</b></button>
+            <button class="map-port map-port--havana" type="button" data-map-port="habana" aria-label="La Habana"><span></span><b>La Habana</b></button>
+            <button class="map-port map-port--veracruz" type="button" data-map-port="veracruz" aria-label="Veracruz"><span></span><b>Veracruz</b></button>
+            <button class="map-port map-port--cartagena" type="button" data-map-port="cartagena" aria-label="Cartagena y Portobelo"><span></span><b>Cartagena</b></button>
+
+            <div class="map-fleet" id="map-fleet" aria-label="Posición de la flota" style="--fleet-x:84%; --fleet-y:28%;">
+              <span class="map-fleet__wake" aria-hidden="true"></span>
+              <span class="map-fleet__ships" aria-hidden="true"><i>⛵</i><i>⛵</i><i>⛵</i></span>
+              <strong id="map-fleet-label">Flota en despacho</strong>
+            </div>
+
+            <div class="map-encounter" id="map-encounter" hidden aria-live="polite"><span aria-hidden="true">⚠</span><b>Incidencia</b></div>
+            <div class="map-status" id="map-status">La flota aguarda licencia en Cádiz.</div>
+            <div class="map-legend" aria-label="Leyenda de la carta">
+              <span><i class="legend-line legend-line--outbound"></i> Ida</span>
+              <span><i class="legend-line legend-line--return"></i> Tornaviaje</span>
+              <span><i class="legend-port"></i> Puerto</span>
+            </div>
+          </div>
+        </figure>
+
         <section class="phase-panel is-active" id="phase-despacho" data-phase-panel="despacho" aria-labelledby="despacho-heading">
           <header class="phase-header">
             <div>
@@ -183,6 +226,12 @@
               </select>
               <div class="port-effect" id="departure-effect" aria-live="polite">
                 <strong>Cádiz:</strong> salida oceánica más ágil y mejor apresto naval.
+              </div>
+              <div class="port-vignette" id="port-vignette" data-port="cadiz" aria-label="Vista simbólica del puerto de Cádiz">
+                <div class="port-vignette__sky" aria-hidden="true"><span class="port-sun"></span><span class="port-cloud"></span></div>
+                <div class="port-vignette__city" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="port-vignette__water" aria-hidden="true"><span class="port-ship">⛵</span></div>
+                <p id="port-vignette-caption"><strong>Bahía de Cádiz</strong><span>Aprestos, arsenales y salida directa al océano.</span></p>
               </div>
               <div class="route-details" id="route-details">
                 <dl>

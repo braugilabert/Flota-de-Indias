@@ -46,6 +46,14 @@ def main() -> int:
 
     css = (ROOT / "css" / "styles.css").read_text(encoding="utf-8")
     css_balanced = css.count("{") == css.count("}")
+    visual_map = ROOT / "assets" / "atlantic-chart-v1.png"
+    visual_map_ready = (
+        visual_map.exists()
+        and visual_map.stat().st_size > 100_000
+        and "../assets/atlantic-chart-v1.png" in css
+        and 'id="campaign-map"' in html
+        and 'id="map-fleet"' in html
+    )
     implementation_report = ROOT / "docs" / "IMPLEMENTACION_REAL_CEDULA.md"
     report_complete = implementation_report.exists() and all(
         f"| {number}." in implementation_report.read_text(encoding="utf-8")
@@ -79,6 +87,7 @@ def main() -> int:
         "recursos ausentes": missing_assets,
         "archivos con codificación sospechosa": replacement_errors,
         "CSS desequilibrado": [] if css_balanced else ["css/styles.css"],
+        "carta atlántica visual incompleta": [] if visual_map_ready else [str(visual_map)],
         "matriz de la Real Cédula incompleta": [] if report_complete else [str(implementation_report)],
         "fuente canónica no declarada": [] if canonical_source_declared else [str(canonical_ordinance)],
         "reglas para jugadores incompletas": [] if player_rules_complete else [str(player_rules)],

@@ -37,6 +37,7 @@
       if (!button || button.disabled) return false;
       button.click();
       const choice = await waitFor(() => doc.querySelector("#event-dialog [data-event-choice]"), "elección de incidencia");
+      if (!doc.querySelector("#event-dialog .event-card__scene")) throw new Error("La incidencia no presenta su escena visual.");
       choice.click();
       await pause();
       return true;
@@ -51,31 +52,56 @@
       frame.contentWindow.addEventListener("error", (event) => errors.push(event.message));
       const doc = frame.contentDocument;
       const visited = [activePhase(doc)];
+      const campaignMap = doc.getElementById("campaign-map");
+      if (!campaignMap || !doc.getElementById("map-fleet")) throw new Error("Falta la carta atlántica persistente.");
+      if (!frame.contentWindow.getComputedStyle(campaignMap.querySelector(".campaign-map__canvas")).backgroundImage.includes("atlantic-chart-v1.png")) {
+        throw new Error("La carta atlántica no usa la ilustración generada.");
+      }
+      if (campaignMap.dataset.season !== "primavera") throw new Error("La carta no comienza en primavera.");
       if (doc.querySelectorAll(".phase-tab[data-phase]").length !== 4) throw new Error("La interfaz no muestra las cuatro estaciones.");
       if (doc.getElementById("goal-display") || doc.getElementById("goal-progress")) throw new Error("El antiguo objetivo de la Corona sigue presente.");
       if (doc.getElementById("player-role-display").textContent.trim() !== "Mercader") throw new Error("El jugador no comienza como mercader.");
       if (doc.body.textContent.includes("pesos")) throw new Error("La interfaz todavía muestra pesos en vez de reales.");
+      const route = doc.getElementById("route-select");
+      route.value = "tierra_firme";
+      route.dispatchEvent(new Event("change", { bubbles: true }));
+      if (doc.querySelector('[data-map-port="cartagena"]').hidden || !doc.querySelector('[data-map-port="veracruz"]').hidden) {
+        throw new Error("La carta no cambia sus puertos para la ruta de Tierra Firme.");
+      }
+      route.value = "nueva_espana";
+      route.dispatchEvent(new Event("change", { bubbles: true }));
       const departure = doc.getElementById("departure-select");
       departure.value = "sevilla";
       departure.dispatchEvent(new Event("change", { bubbles: true }));
       if (!doc.getElementById("departure-effect").textContent.includes("6 %") || !doc.getElementById("departure-effect").textContent.includes("2 jornadas")) {
         throw new Error("Sevilla no muestra sus efectos mercantiles y fluviales.");
       }
+      if (doc.getElementById("port-vignette").dataset.port !== "sevilla") throw new Error("La vista portuaria no representa Sevilla.");
       departure.value = "cadiz";
       departure.dispatchEvent(new Event("change", { bubbles: true }));
       if (!doc.getElementById("departure-effect").textContent.includes("800 reales")) throw new Error("Cádiz no muestra su ventaja de apresto.");
+      if (doc.getElementById("port-vignette").dataset.port !== "cadiz") throw new Error("La vista portuaria no representa Cádiz.");
 
       const dispatch = doc.getElementById("dispatch-button");
       if (dispatch.disabled) throw new Error(`Despacho bloqueado: ${doc.getElementById("dispatch-validation").textContent}`);
       dispatch.click();
       await waitFor(() => activePhase(doc) === "ida", "inicio de la ida");
       visited.push("ida");
+      if (campaignMap.dataset.season !== "verano" || !doc.getElementById("map-route-outbound").classList.contains("is-current")) {
+        throw new Error("La carta no activa el verano y la derrota de ida.");
+      }
+      const fleetOrigin = doc.getElementById("map-fleet").style.getPropertyValue("--fleet-x");
 
       for (let index = 0; index < 8 && activePhase(doc) === "ida"; index += 1) {
         await resolveOneLeg(doc, "sail-button");
+        if (index === 0 && doc.getElementById("map-fleet").style.getPropertyValue("--fleet-x") === fleetOrigin) {
+          throw new Error("La flota no avanza visualmente tras una singladura.");
+        }
       }
       await waitFor(() => activePhase(doc) === "mercado", "arribada al mercado");
       visited.push("mercado");
+      if (campaignMap.dataset.season !== "otono") throw new Error("La feria no cambia la carta a otoño.");
+      if (!doc.querySelector("#market-table-body .commodity-icon")) throw new Error("El mercado no muestra mercancías visuales.");
 
       doc.getElementById("sell-all-button").click();
       const buy = await waitFor(() => doc.querySelector("[data-buy-good]"), "mercancía de retorno");
@@ -85,12 +111,16 @@
       depart.click();
       await waitFor(() => activePhase(doc) === "tornaviaje", "inicio del tornaviaje");
       visited.push("tornaviaje");
+      if (campaignMap.dataset.season !== "invierno" || !doc.getElementById("map-route-return").classList.contains("is-current")) {
+        throw new Error("La carta no activa la invernada y el tornaviaje.");
+      }
 
       for (let index = 0; index < 8 && activePhase(doc) === "tornaviaje"; index += 1) {
         await resolveOneLeg(doc, "return-sail-button");
       }
       await waitFor(() => activePhase(doc) === "liquidacion", "liquidación final");
       visited.push("liquidacion");
+      if (campaignMap.dataset.season !== "cierre") throw new Error("La carta no muestra el cierre del ciclo.");
 
       const settlement = doc.getElementById("settlement-summary").textContent.trim();
       if (!settlement.includes("puntos")) throw new Error("No se calculó la puntuación final.");
@@ -103,6 +133,7 @@
         treasury: doc.getElementById("treasury-display").textContent,
         settlement: settlement.replace(/\s+/g, " "),
         logEntries: doc.querySelectorAll("#scribe-log-list li").length,
+        visualMap: true,
       };
     }
 

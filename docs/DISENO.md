@@ -89,6 +89,11 @@ asientos. La Real Audiencia utiliza esos asientos como pruebas.
 
 ### 4.5. Compendio histórico simultáneo
 
+Las reformas reunidas en la Real Cédula operan conjuntamente durante la
+expedición. La interfaz evita convertir esta síntesis normativa en una fecha de
+campaña: el jugador ve la estación y el estado del viaje, no una cronología
+falsa del compendio.
+
 Las reformas se manifiestan como sistemas concurrentes:
 
 - el convoy organizado y la autoridad de capitana y almiranta;
@@ -100,6 +105,20 @@ Las reformas se manifiestan como sistemas concurrentes:
 
 No hay capítulos cronológicos, tecnologías ni una campaña que sustituya unas
 normas por otras.
+
+### 4.6. La carta atlántica cuenta el viaje
+
+El mapa no es decoración ni una pantalla separada. Permanece visible durante
+todo el ciclo y traduce el estado del motor en información espacial: puerto de
+despacho, derrota de ida, escalas, posición aproximada del convoy, destino,
+reunión en La Habana, Azores y tornaviaje. El color ambiental cambia con las
+cuatro estaciones y las incidencias aparecen sobre el océano antes de que el
+jugador decida.
+
+La carta usa una ilustración original sin rótulos para que los nombres, rutas y
+marcadores sean elementos accesibles de la interfaz y puedan cambiar según la
+partida. Cádiz se representa como salida oceánica y Sevilla como red mercantil
+ligada al descenso del Guadalquivir y a la barra de Sanlúcar.
 
 ## 5. Papel del jugador
 

@@ -64,6 +64,7 @@ el tornaviaje sin quebrar la Real Compañía. El resultado combina:
 ├── index.html
 ├── REGLAS_DEL_JUEGO.md
 ├── assets/
+│   ├── atlantic-chart-v1.png
 │   └── favicon.svg
 ├── css/
 │   └── styles.css
@@ -84,7 +85,11 @@ el tornaviaje sin quebrar la Real Compañía. El resultado combina:
 
 Versión `0.1.0`: un viaje completo de ida y vuelta, con dos rutas,
 configuración del despacho, financiación, certificación, eventos navales,
-mercado americano, seguro, liquidación y expedientes de la Real Audiencia.
+mercado americano, seguro, liquidación y expedientes de la Real Audiencia. La
+interfaz incorpora una carta atlántica persistente: muestra la posición de la
+flota, la derrota activa, los puertos alcanzados y el cambio de estación. Los
+puertos de Cádiz y Sevilla, los tipos de navío, las mercancías y los encuentros
+tienen además representación visual propia.
 
 El apartado 15 de la Real Cédula se considera un banco de hipótesis de diseño.
 Sus cifras y alternativas no se tratan como normas cerradas hasta ser probadas.

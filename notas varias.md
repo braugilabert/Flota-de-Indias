@@ -7,9 +7,9 @@ yo creo que este juego será por turnos (todos los jugadores hacen cambios - a l
 
 En la terminal de windows: 
 
-C:\Users\Usuario\Documents\Carrera de Indias\Flota-de-Indias
+cd C:\Users\Usuario\Documents\Carrera de Indias\Flota-de-Indias
 git add .
-git commit -m "flota de indias 2"
+git commit -m "flota de indias mapa"
 git push
 
 En el mac:

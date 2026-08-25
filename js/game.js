@@ -40,6 +40,30 @@
     registro: { name: "Expedición de registro", merchantCount: 2, escortCount: 1, avisoCount: 1, shipValue: 72000 },
     suelto: { name: "Navío suelto", merchantCount: 1, escortCount: 0, avisoCount: 0, shipValue: 30000 },
   };
+  const MAP_ROUTES = Object.freeze({
+    nueva_espana: {
+      destinationPort: "veracruz",
+      outboundPath: "M 84 28 C 80 33, 77 39, 72 42 S 39 56, 17 62 S 10 64, 7 65",
+      returnPath: "M 7 65 C 10 62, 12 61, 17 62 S 45 39, 62 23 S 77 25, 84 28",
+      outbound: [{ x: 84, y: 28 }, { x: 72, y: 42 }, { x: 17, y: 62 }, { x: 7, y: 65 }],
+      return: [{ x: 7, y: 65 }, { x: 12, y: 61 }, { x: 62, y: 23 }, { x: 84, y: 28 }],
+    },
+    tierra_firme: {
+      destinationPort: "cartagena",
+      outboundPath: "M 84 28 C 80 33, 77 39, 72 42 S 42 58, 19 77",
+      returnPath: "M 19 77 C 17 69, 14 64, 12 61 S 44 39, 62 23 S 77 25, 84 28",
+      outbound: [{ x: 84, y: 28 }, { x: 72, y: 42 }, { x: 19, y: 77 }],
+      return: [{ x: 19, y: 77 }, { x: 12, y: 61 }, { x: 62, y: 23 }, { x: 84, y: 28 }],
+    },
+  });
+  const MAP_PORT_INFO = Object.freeze({
+    spain: "Puerto de despacho, matrícula, registro y apresto de la expedición.",
+    canarias: "Escala de aguada y ajuste del convoy antes del cruce atlántico.",
+    azores: "Referencia decisiva del tornaviaje y zona de vigilancia enemiga.",
+    habana: "Punto de reunión de las flotas antes del regreso a España.",
+    veracruz: "Terminal principal de la Flota de Nueva España.",
+    cartagena: "Escala fortificada de los Galeones de Tierra Firme y enlace con Portobelo.",
+  });
 
   const FALLBACK_ROUTES = [
     {
@@ -243,6 +267,9 @@
     if (!target) return;
     target.textContent = message;
     target.dataset.tone = tone || "info";
+    target.classList.toggle("is-warning", tone === "warning");
+    target.classList.toggle("is-success", tone === "success");
+    setText("map-status", message);
   }
 
   function addLog(message, category) {
@@ -271,9 +298,189 @@
     return routes().find((route) => route.id === state.routeId) || routes()[0];
   }
 
+  function currentMapRoute() {
+    const normalized = String(state.routeId || "nueva_espana").replaceAll("-", "_");
+    if (MAP_ROUTES[normalized]) return MAP_ROUTES[normalized];
+    return normalized.includes("firme") ? MAP_ROUTES.tierra_firme : MAP_ROUTES.nueva_espana;
+  }
+
+  function interpolateMapPosition(points, progress) {
+    const safePoints = points && points.length ? points : [{ x: 84, y: 28 }];
+    const scaled = ENGINE.clamp(progress, 0, 1) * Math.max(0, safePoints.length - 1);
+    const startIndex = Math.min(Math.floor(scaled), safePoints.length - 1);
+    const endIndex = Math.min(startIndex + 1, safePoints.length - 1);
+    const localProgress = scaled - startIndex;
+    return {
+      x: safePoints[startIndex].x + (safePoints[endIndex].x - safePoints[startIndex].x) * localProgress,
+      y: safePoints[startIndex].y + (safePoints[endIndex].y - safePoints[startIndex].y) * localProgress,
+    };
+  }
+
+  function eventIcon(category) {
+    const icons = {
+      meteorologia: "☂",
+      storm: "☂",
+      navegacion: "✦",
+      salud: "⚕",
+      averia: "⚒",
+      institucional: "§",
+      amenaza: "⚔",
+      combate: "⚔",
+      enemy: "⚔",
+      disciplina: "⚖",
+      informacion: "✉",
+      dilema: "◈",
+      oportunidad: "✧",
+      logistica: "⚓",
+    };
+    return icons[category] || "⛵";
+  }
+
+  function effectsSummary(effects, combat) {
+    if (combat) {
+      const combatLabels = {
+        line: "Máxima presión sobre el enemigo · riesgo para la escolta",
+        protect: "Menor pérdida mercante · maniobra más lenta",
+        evade: "Evita el choque · depende de velamen y cohesión",
+      };
+      return combatLabels[combat] || "Resolución táctica";
+    }
+    const labels = {
+      hull: "casco",
+      sails: "velamen",
+      morale: "moral",
+      delay: "demora",
+      reputation: "reputación",
+      cohesion: "cohesión",
+      information: "información",
+      supplies: "víveres",
+      threat: "amenaza",
+      cargoLossPercent: "% de carga en riesgo",
+    };
+    const details = Object.entries(effects || {}).flatMap(([key, value]) => {
+      if (key === "shipDamage" && value && typeof value === "object") {
+        return Object.entries(value).map(([part, amount]) => `${Number(amount) > 0 ? "+" : ""}${amount} ${labels[part] || part}`);
+      }
+      if (labels[key] && typeof value === "number") return [`${value > 0 ? "+" : ""}${value} ${labels[key]}`];
+      if (key === "dispute" && value) return ["posible pleito"];
+      if (key === "negligence" && value) return ["riesgo de negligencia"];
+      return [];
+    });
+    return details.length ? details.join(" · ") : "Consecuencia sujeta a la travesía";
+  }
+
+  function goodIcon(good) {
+    if (good && good.icon) return good.icon;
+    const icons = { plata: "●", grana: "◆", cochinilla: "◆", cacao: "◒", tabaco: "❧", anil: "●", indigo: "●", cuero: "◧", cueros: "◧" };
+    return icons[(good && good.id) || ""] || "◇";
+  }
+
   function portName(portId) {
     const port = collection(DATA.ports).find((candidate) => candidate.id === portId);
     return port ? port.name : portId;
+  }
+
+  function renderCampaignMap() {
+    const map = byId("campaign-map");
+    const fleet = byId("map-fleet");
+    if (!map || !fleet) return;
+    const mapRoute = currentMapRoute();
+    const route = currentRoute();
+    const outboundLegs = routeLegs(route, "ida");
+    const returnLegs = routeLegs(route, "tornaviaje");
+    const seasonByPhase = { despacho: "primavera", ida: "verano", mercado: "otono", tornaviaje: "invierno", liquidacion: "cierre" };
+    const seasonLabels = {
+      despacho: ["❧", "Primavera · despacho"],
+      ida: ["☀", "Verano · Mar Océano"],
+      mercado: ["⌁", "Otoño · feria americana"],
+      tornaviaje: ["☁", "Invierno · invernada y regreso"],
+      liquidacion: ["⚓", "Cierre · España"],
+    };
+    const weatherSymbols = { despacho: "☀", ida: "☀", mercado: "❧", tornaviaje: "☁", liquidacion: "☀" };
+    let position = mapRoute.outbound[0];
+    let fleetLabel = "Flota en despacho";
+    if (state.phase === "ida") {
+      position = interpolateMapPosition(mapRoute.outbound, state.outboundIndex / Math.max(1, outboundLegs.length));
+      fleetLabel = `Travesía de ida · ${state.outboundIndex}/${outboundLegs.length}`;
+    } else if (state.phase === "mercado") {
+      position = mapRoute.outbound[mapRoute.outbound.length - 1];
+      fleetLabel = `En ${portName(route.destination) || "América"}`;
+    } else if (state.phase === "tornaviaje") {
+      position = interpolateMapPosition(mapRoute.return, state.returnIndex / Math.max(1, returnLegs.length));
+      fleetLabel = `Tornaviaje · ${state.returnIndex}/${returnLegs.length}`;
+    } else if (state.phase === "liquidacion") {
+      position = mapRoute.return[mapRoute.return.length - 1];
+      fleetLabel = "Flota de regreso";
+    }
+
+    map.dataset.season = seasonByPhase[state.phase] || "primavera";
+    const season = seasonLabels[state.phase] || seasonLabels.despacho;
+    const badge = byId("map-season-badge");
+    if (badge) badge.innerHTML = `<span aria-hidden="true">${season[0]}</span> ${season[1]}`;
+    const weather = byId("map-weather");
+    if (weather) {
+      const symbol = weather.querySelector(".weather-symbol");
+      if (symbol) symbol.textContent = weatherSymbols[state.phase] || "☀";
+    }
+    const outboundPath = byId("map-route-outbound");
+    const returnPath = byId("map-route-return");
+    if (outboundPath) {
+      outboundPath.setAttribute("d", mapRoute.outboundPath);
+      outboundPath.classList.toggle("is-current", state.phase === "despacho" || state.phase === "ida");
+      outboundPath.classList.toggle("is-complete", ["mercado", "tornaviaje", "liquidacion"].includes(state.phase));
+    }
+    if (returnPath) {
+      returnPath.setAttribute("d", mapRoute.returnPath);
+      returnPath.classList.toggle("is-current", state.phase === "tornaviaje");
+      returnPath.classList.toggle("is-complete", state.phase === "liquidacion");
+    }
+
+    fleet.style.setProperty("--fleet-x", `${position.x}%`);
+    fleet.style.setProperty("--fleet-y", `${position.y}%`);
+    fleet.setAttribute("aria-label", `${fleetLabel}. Posición aproximada en la carta atlántica.`);
+    setText("map-fleet-label", fleetLabel);
+    setText("map-port-spain", state.departure === "cadiz" ? "Cádiz" : "Sevilla · Sanlúcar");
+    const spain = document.querySelector('[data-map-port="spain"]');
+    if (spain) spain.setAttribute("aria-label", `Puerto de despacho: ${state.departure === "cadiz" ? "Cádiz" : "Sevilla y Sanlúcar"}`);
+
+    const veracruz = document.querySelector('[data-map-port="veracruz"]');
+    const cartagena = document.querySelector('[data-map-port="cartagena"]');
+    if (veracruz) veracruz.hidden = mapRoute.destinationPort !== "veracruz";
+    if (cartagena) cartagena.hidden = mapRoute.destinationPort !== "cartagena";
+    $$("[data-map-port]").forEach((port) => port.classList.remove("is-active", "is-reached"));
+    const mark = (name, className) => {
+      const port = document.querySelector(`[data-map-port="${name}"]`);
+      if (port && !port.hidden) port.classList.add(className);
+    };
+    if (state.phase !== "despacho" || state.outboundIndex > 0) mark("spain", "is-reached");
+    if (state.outboundIndex >= 1 || ["mercado", "tornaviaje", "liquidacion"].includes(state.phase)) mark("canarias", "is-reached");
+    if (["mercado", "tornaviaje", "liquidacion"].includes(state.phase)) mark(mapRoute.destinationPort, "is-reached");
+    if (state.returnIndex >= Math.max(1, returnLegs.length - 1) || state.phase === "liquidacion") mark("azores", "is-reached");
+    if (state.returnIndex >= 1 || state.phase === "liquidacion" || (state.routeId.includes("nueva") && state.outboundIndex >= 3)) mark("habana", "is-reached");
+    if (state.phase === "despacho") mark("spain", "is-active");
+    if (state.phase === "mercado") mark(mapRoute.destinationPort, "is-active");
+    if (state.phase === "liquidacion") mark("spain", "is-active");
+    if (state.phase === "ida" && state.outboundIndex === 1) mark("canarias", "is-active");
+    if (state.phase === "ida" && state.outboundIndex >= Math.max(2, outboundLegs.length - 1)) mark(mapRoute.destinationPort, "is-active");
+    if (state.phase === "tornaviaje" && state.returnIndex === 0) mark(mapRoute.destinationPort, "is-active");
+    if (state.phase === "tornaviaje" && state.returnIndex === 1) mark("habana", "is-active");
+    if (state.phase === "tornaviaje" && state.returnIndex >= Math.max(2, returnLegs.length - 1)) mark("azores", "is-active");
+
+    const status = byId("status-message");
+    setText("map-status", status && status.textContent.trim()
+      ? status.textContent.trim()
+      : `Ruta prevista hacia ${portName(route.destination) || "América"}.`);
+    const vignette = byId("port-vignette");
+    if (vignette) {
+      vignette.dataset.port = state.departure;
+      vignette.setAttribute("aria-label", state.departure === "cadiz" ? "Vista simbólica del puerto de Cádiz" : "Vista simbólica de Sevilla y el Guadalquivir");
+    }
+    const vignetteCaption = byId("port-vignette-caption");
+    if (vignetteCaption) {
+      vignetteCaption.innerHTML = state.departure === "cadiz"
+        ? "<strong>Bahía de Cádiz</strong><span>Arsenales y salida directa al Mar Océano.</span>"
+        : "<strong>Sevilla y Sanlúcar</strong><span>Red mercantil y descenso por el Guadalquivir.</span>";
+    }
   }
 
   function routeLegs(route, direction) {
@@ -543,10 +750,11 @@
     if (departureEffect) departureEffect.textContent = currentPortEffect().description;
     const routeCalendar = byId("route-calendar");
     if (routeCalendar) {
-      routeCalendar.textContent = state.routeId === "tierra-firme"
+      routeCalendar.textContent = String(state.routeId).replaceAll("-", "_") === "tierra_firme"
         ? "Salida histórica de agosto; invernada en Indias; concentración en La Habana y regreso desde marzo."
         : "Salida histórica de mayo; invernada en Indias; concentración en La Habana y regreso desde marzo.";
     }
+    renderCampaignMap();
   }
 
   function updateHeader() {
@@ -642,6 +850,12 @@
       ].map((choice) => Object.assign(choice, { escortStrength: 25 + profile.escortCount * 22 + profile.avisoCount * 4 }));
     }
     const dialog = byId("event-dialog");
+    const encounter = byId("map-encounter");
+    if (encounter) {
+      encounter.hidden = false;
+      const encounterTitle = encounter.querySelector("b");
+      if (encounterTitle) encounterTitle.textContent = event.title || event.name || "Incidencia";
+    }
 
     const applyChoice = (choice) => {
       if (choice.combat) {
@@ -679,6 +893,7 @@
       updateHeader();
       saveState();
       if (dialog) closeDialog(dialog);
+      if (encounter) encounter.hidden = true;
       onDone();
     };
 
@@ -687,13 +902,30 @@
       return;
     }
 
+    const category = event.category || "navegacion";
+    const combatScene = ["combate", "amenaza", "enemy"].includes(category);
     showDialog(dialog, `
-      <article class="event-card">
-        <p class="eyebrow">Incidencia de ${phase === "ida" ? "ida" : "tornaviaje"}</p>
-        <h2>${escapeHtml(event.title || event.name || "Incidencia")}</h2>
-        <p>${escapeHtml(event.text || event.description || "La travesía exige una decisión.")}</p>
-        <div class="event-choices">
-          ${choices.map((choice, index) => `<button type="button" data-event-choice="${index}">${escapeHtml(choice.label)}</button>`).join("")}
+      <article class="event-card event-card--${escapeHtml(category)}">
+        <div class="event-card__scene" aria-hidden="true">
+          <span class="event-card__category">${escapeHtml(category.replaceAll("_", " "))}</span>
+          ${combatScene
+            ? `<div class="combat-board">
+                <div class="combat-line combat-line--enemy"><span>☠</span><span>⛵</span><span>⛵</span></div>
+                <div class="combat-line combat-line--escort"><span>⛵</span><span>⚓</span><span>⛵</span></div>
+                <div class="combat-line combat-line--merchant"><span>⛵</span><span>⛵</span><span>⛵</span></div>
+              </div>`
+            : `<span class="event-card__scene-icon">${eventIcon(category)}</span>`}
+        </div>
+        <div class="event-card__body">
+          <p class="eyebrow">Incidencia de ${phase === "ida" ? "ida" : "tornaviaje"}</p>
+          <h2>${escapeHtml(event.title || event.name || "Incidencia")}</h2>
+          <p>${escapeHtml(event.text || event.description || "La travesía exige una decisión.")}</p>
+          <div class="event-choices">
+            ${choices.map((choice, index) => `<button class="event-choice" type="button" data-event-choice="${index}">
+              <span class="event-choice__number">${index + 1}</span>
+              <span class="event-choice__copy"><strong>${escapeHtml(choice.label)}</strong><small>${escapeHtml(effectsSummary(choice.effects, choice.combat))}</small></span>
+            </button>`).join("")}
+          </div>
         </div>
       </article>`);
     dialog.querySelectorAll("[data-event-choice]").forEach((button) => {
@@ -835,10 +1067,10 @@
       const price = goodPrice(good, index);
       const demand = price > Number(good.buy || good.basePrice || good.price || 100) ? "Alta" : "Ordinaria";
       return `<tr>
-        <td>${escapeHtml(good.name || good.label || good.id)}</td>
+        <td><span class="commodity-cell"><span class="commodity-icon" aria-hidden="true">${goodIcon(good)}</span><strong>${escapeHtml(good.name || good.label || good.id)}</strong></span></td>
         <td>${state.returnCargoValue > 0 ? "Lotes registrados" : "0"}</td>
         <td>${formatMoney.format(price)}</td>
-        <td>${demand}</td>
+        <td><span class="demand-pill ${demand === "Alta" ? "demand-pill--high" : ""}">${demand}</span></td>
         <td><button type="button" class="small-button" data-buy-good="${escapeHtml(good.id)}" data-price="${price}">Cargar lote</button></td>
       </tr>`;
     }).join("");
@@ -1119,6 +1351,7 @@
     if (state.phase === "mercado") renderMarket();
     if (state.phase === "tornaviaje") renderProgress("tornaviaje");
     if (state.phase === "liquidacion") renderSettlement();
+    renderCampaignMap();
   }
 
   function updateFleetSidebar() {
@@ -1128,13 +1361,22 @@
     setText("fleet-status", state.phase === "despacho" ? "En despacho" : state.phase === "liquidacion" ? "En puerto" : "En navegación");
     const profile = PROFILES[state.profile] || PROFILES.equilibrada;
     const fleetList = byId("fleet-list");
-    if (fleetList && state.dispatch) {
+    if (fleetList) {
+      const planned = !state.dispatch;
       const rows = [
-        [profile.merchantCount, "Mercantes", `${Math.round(state.hull)} % casco`],
-        [profile.escortCount, "Escoltas", "a barlovento"],
-        [profile.avisoCount, "Avisos", "información y descubierta"],
-      ].filter(([count]) => count > 0);
-      fleetList.innerHTML = rows.map(([count, name, detail]) => `<li><strong>${count} × ${name}</strong><span>${detail}</span></li>`).join("");
+        { count: profile.merchantCount, role: "merchant", name: "Mercantes", detail: planned ? "proyecto de carga" : `${Math.round(state.hull)} % de casco`, health: planned ? 100 : state.hull, icon: "⛵" },
+        { count: profile.escortCount, role: "escort", name: "Escoltas", detail: "defensa a barlovento", health: planned ? 100 : state.cohesion, icon: "⚓" },
+        { count: profile.avisoCount, role: "aviso", name: "Avisos", detail: "correo y descubierta", health: planned ? 100 : state.information, icon: "➶" },
+      ].filter((row) => row.count > 0);
+      fleetList.innerHTML = rows.length ? rows.map((row) => `
+        <li class="fleet-vessel fleet-vessel--${row.role} ${planned ? "is-planned" : ""}">
+          <div class="fleet-vessel__identity">
+            <span class="fleet-vessel__icon" aria-hidden="true">${row.icon}</span>
+            <span class="fleet-vessel__title"><strong>${row.count} × ${row.name}</strong><small>${row.detail}</small></span>
+          </div>
+          <span class="fleet-vessel__condition" aria-hidden="true"><i style="width:${ENGINE.clamp(row.health, 0, 100)}%"></i></span>
+          <span class="fleet-vessel__meta"><span>${planned ? "Proyecto" : "En servicio"}</span><span>${Math.round(row.health)} %</span></span>
+        </li>`).join("") : `<li class="fleet-list__empty"><span aria-hidden="true">◇</span>Sin navíos disponibles.</li>`;
     }
     setText("escort-display", state.dispatch ? `${profile.escortCount} escoltas` : "0 escoltas");
     setText("supplies-display", `${Math.round(state.supplies)} %`);
@@ -1144,6 +1386,15 @@
     const completed = state.outboundIndex + state.returnIndex;
     const ship = byId("route-ship");
     if (ship) ship.style.left = `${ENGINE.clamp(completed / Math.max(1, totalLegs) * 100, 0, 100)}%`;
+    const routeCaptions = {
+      despacho: `Ruta prevista hacia ${portName(route.destination) || "América"}.`,
+      ida: `Travesía de ida: ${state.outboundIndex} de ${routeLegs(route, "ida").length} tramos.`,
+      mercado: `Flota fondeada en ${portName(route.destination) || "América"}.`,
+      tornaviaje: `Regreso: ${state.returnIndex} de ${routeLegs(route, "tornaviaje").length} tramos.`,
+      liquidacion: `Expedición de vuelta en ${state.departure === "cadiz" ? "Cádiz" : "Sevilla/Sanlúcar"}.`,
+    };
+    setText("route-caption", routeCaptions[state.phase] || routeCaptions.despacho);
+    renderCampaignMap();
   }
 
   function renderAll() {
@@ -1210,6 +1461,12 @@
     if (reset) reset.addEventListener("click", resetGame);
     const exportButton = byId("export-log-button");
     if (exportButton) exportButton.addEventListener("click", exportLog);
+    $$("[data-map-port]").forEach((port) => {
+      port.addEventListener("click", () => {
+        const name = port.querySelector("b");
+        setStatus(`${name ? name.textContent : "Puerto"}: ${MAP_PORT_INFO[port.dataset.mapPort] || "Escala de la Carrera de Indias."}`, "info");
+      });
+    });
     const filterButton = byId("scribe-filter-button");
     if (filterButton) filterButton.hidden = true;
   }
