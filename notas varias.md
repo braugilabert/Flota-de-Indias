@@ -4,12 +4,14 @@ que haya tres opciones.. con nueva españa solo, con tierra firme tb y con carre
 
 yo creo que este juego será por turnos (todos los jugadores hacen cambios - a la vez mejor que uno tras otro - y luego pasa un tiempo y sucede la siguiente fase en la que tienen x tiempo también cada jugador)
 
+que los recursos que se llevan a america y los q se compran de ahi coincidan con aquellos de las ferias históricas de la carrera de indias
+
 
 En la terminal de windows: 
 
 cd C:\Users\Usuario\Documents\Carrera de Indias\Flota-de-Indias
 git add .
-git commit -m "flota de indias mapa"
+git commit -m "flota de indias actualizado"
 git push
 
 En el mac:
