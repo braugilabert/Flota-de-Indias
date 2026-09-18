@@ -1,6 +1,6 @@
 # Real Compañía: Carrera de Indias
 
-Prototipo web de estrategia económica, logística y naval inspirado en la
+Prototipo de juego web de estrategia económica, logística y naval inspirado en la
 `Real Cédula de la Real Compañía Carrera de Indias`.
 
 El prototipo emplea simultáneamente las instituciones y posibilidades
